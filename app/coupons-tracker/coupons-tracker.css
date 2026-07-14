@@ -1,0 +1,238 @@
+/* Page header */
+/* Add this one rule to your existing shell.css .nav-item block, or as a standalone override:
+.nav-item { text-decoration: none; }
+*/
+
+.tracker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tracker-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+}
+.btn-primary {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #111;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary:hover {
+  background: #f5f5f5;
+}
+
+/* Table card (light) */
+.table-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
+}
+.table-card-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+.coupons-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.coupons-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+}
+.coupons-table td {
+  font-size: 13px;
+  color: #111827;
+  padding: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+}
+.coupons-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.coupons-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.source-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.source-main {
+  font-size: 13px;
+  color: #111827;
+}
+.source-sub {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.status-badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status-active {
+  background: rgba(29, 158, 117, 0.15);
+  color: #34d399;
+}
+.status-pending {
+  background: rgba(239, 159, 39, 0.15);
+  color: #fbbf24;
+}
+.status-expired {
+  background: rgba(226, 75, 74, 0.15);
+  color: #f87171;
+}
+.status-rejected {
+  background: rgba(148, 148, 152, 0.15);
+  color: #9ca3af;
+}
+
+/* Row actions */
+.row-actions {
+  display: flex;
+  gap: 10px;
+}
+.row-action {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+}
+.row-action:hover {
+  color: #e4e4e7;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal-card {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 420px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 20px;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+}
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #141414;
+}
+.modal-close:hover {
+  color: #111;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.detail-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: hsl(0, 0%, 0%);
+  letter-spacing: 0.04em;
+}
+.detail-grid p {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111;
+  margin-top: 2px;
+}
+
+.coupon-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.coupon-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #000000;
+}
+.coupon-form input {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.coupon-form select {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .tracker-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
