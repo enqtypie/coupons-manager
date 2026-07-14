@@ -24,16 +24,73 @@ export interface NotifItem {
   sub: string;
 }
 
-export type CouponStatus = "Active" | "Pending" | "Expired" | "Rejected";
+export type CouponStatus = "Active" | "Inactive";
+export type CouponSource = "Email" | "Slack" | "Zendesk" | "Basecamp";
+export type CouponType = "Discount" | "Hot Deals";
+export type RedemptionType = "Multi" | "Single";
+export type AgentHandling = "Mark" | "Noli";
 
 export type CouponRecord = {
   id: string;
-  dateReceived: string;
+  date: string;
   status: CouponStatus;
-  source: string;       // e.g. "Zendesk"
-  sourceRef?: string;   // e.g. "Ticket no. 12345"
+  source: CouponSource;
+  sourceRef?: string;
   sender: string;
-  type: string;
+  type: CouponType;
   promoTitle: string;
   code: string;
+  promoLink: string;
+  redemptionType: RedemptionType;
+  startDate: string;
+  endDate: string;
+  participatingStores: string;
+  agentHandling: AgentHandling;
+  agentSignOff: string;
+  startOfDayCheck: string;
+  calendarInviteCreated: boolean;
 };
+
+export type CouponRow = {
+  id: string;
+  date: string;
+  status: CouponStatus;
+  source: CouponSource;
+  source_ref: string | null;
+  sender: string;
+  type: CouponType;
+  promo_title: string;
+  code: string;
+  promo_link: string | null;
+  redemption_type: RedemptionType;
+  start_date: string | null;
+  end_date: string | null;
+  participating_stores: string | null;
+  agent_handling: AgentHandling;
+  agent_sign_off: string | null;
+  start_of_day_check: string | null;
+  calendar_invite_created: boolean;
+};
+
+export function rowToRecord(row: CouponRow): CouponRecord {
+  return {
+    id: row.id,
+    date: row.date,
+    status: row.status,
+    source: row.source,
+    sourceRef: row.source_ref ?? undefined,
+    sender: row.sender,
+    type: row.type,
+    promoTitle: row.promo_title,
+    code: row.code,
+    promoLink: row.promo_link ?? "",
+    redemptionType: row.redemption_type,
+    startDate: row.start_date ?? "",
+    endDate: row.end_date ?? "",
+    participatingStores: row.participating_stores ?? "",
+    agentHandling: row.agent_handling,
+    agentSignOff: row.agent_sign_off ?? "",
+    startOfDayCheck: row.start_of_day_check ?? "",
+    calendarInviteCreated: row.calendar_invite_created,
+  };
+}

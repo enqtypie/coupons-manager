@@ -228,6 +228,12 @@
   background: #fff;
 }
 
+.checkbox-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .tracker-header {
