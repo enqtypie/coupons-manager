@@ -9,7 +9,7 @@ export interface NavSection {
   items: NavItem[];
 }
 
-export interface StatCard {
+export type StatCard = {
   label: string;
   value: number;
   sub: string;
@@ -17,7 +17,8 @@ export interface StatCard {
   iconBg: string;
   iconColor: string;
   icon: React.ReactNode;
-}
+  key: "active" | "expired" | "hotDeals" | "discounts";
+};
 
 export interface NotifItem {
   text: string;
