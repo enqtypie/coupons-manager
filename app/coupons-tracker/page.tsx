@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sidebar from "@/app/components/Sidebar";
 import CouponsTable from "@/app/components/CouponsTable";
 import ViewCouponModal from "@/app/components/ViewCouponModal";
@@ -13,34 +13,97 @@ import "./coupons-tracker.css";
 
 type FilterOption = "All" | "Active" | "Inactive" | "Alphabetical" | "Start Date" | "End Date";
 
+const PAGE_SIZE = 50;
+
 export default function CouponsTrackerPage() {
   const [coupons, setCoupons] = useState<CouponRecord[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [viewCoupon, setViewCoupon] = useState<CouponRecord | null>(null);
   const [editCoupon, setEditCoupon] = useState<CouponRecord | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterOption, setFilterOption] = useState<FilterOption>("All");
+  const [page, setPage] = useState(1);
+  const [reloadToken, setReloadToken] = useState(0);
 
-  async function loadCoupons() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("coupons")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const latestRequestId = useRef(0);
 
-    if (error) {
-      console.error("Failed to load coupons:", error.message);
-    } else {
-      setCoupons(data.map(rowToRecord));
-    }
-    setLoading(false);
+  // Debounce search input so every keystroke doesn't hit the backend.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Jump back to page 1 whenever the search/filter changes the result set.
+  const queryKey = `${debouncedSearch}|${filterOption}`;
+  const [prevQueryKey, setPrevQueryKey] = useState(queryKey);
+  if (queryKey !== prevQueryKey) {
+    setPrevQueryKey(queryKey);
+    setPage(1);
   }
 
   useEffect(() => {
+    const requestId = ++latestRequestId.current;
+
+    async function loadCoupons() {
+      setLoading(true);
+
+      let query = supabase.from("coupons").select("*", { count: "exact" });
+
+      if (debouncedSearch) {
+        const pattern = `%${debouncedSearch}%`;
+        query = query.or(
+          [
+            `promo_title.ilike.${pattern}`,
+            `code.ilike.${pattern}`,
+            `sender.ilike.${pattern}`,
+            `source_ref.ilike.${pattern}`,
+            `agent_sign_off.ilike.${pattern}`,
+            `participating_stores.ilike.${pattern}`,
+          ].join(",")
+        );
+      }
+
+      switch (filterOption) {
+        case "Active":
+          query = query.eq("status", "Active").order("created_at", { ascending: false });
+          break;
+        case "Inactive":
+          query = query.eq("status", "Inactive").order("created_at", { ascending: false });
+          break;
+        case "Alphabetical":
+          query = query.order("promo_title", { ascending: true });
+          break;
+        case "Start Date":
+          query = query.order("start_date", { ascending: true });
+          break;
+        case "End Date":
+          query = query.order("end_date", { ascending: true });
+          break;
+        default:
+          query = query.order("created_at", { ascending: false });
+      }
+
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error, count } = await query.range(from, to);
+
+      if (requestId !== latestRequestId.current) return; // a newer request has since started
+
+      if (error) {
+        console.error("Failed to load coupons:", error.message);
+      } else {
+        setCoupons((data ?? []).map(rowToRecord));
+        setTotalCount(count ?? 0);
+      }
+      setLoading(false);
+    }
+
     loadCoupons();
-  }, []);
+  }, [page, debouncedSearch, filterOption, reloadToken]);
 
   async function handleCreate(form: Omit<CouponRecord, "id">) {
     const { error } = await supabase.from("coupons").insert({
@@ -66,7 +129,8 @@ export default function CouponsTrackerPage() {
       console.error("Failed to create coupon:", error.message);
       return;
     }
-    await loadCoupons();
+    if (page === 1) setReloadToken((t) => t + 1);
+    else setPage(1);
   }
 
   async function handleSaveEdit(updated: CouponRecord) {
@@ -97,56 +161,12 @@ export default function CouponsTrackerPage() {
       console.error("Failed to update coupon:", error.message);
       return;
     }
-    await loadCoupons();
+    setReloadToken((t) => t + 1);
   }
 
-  const visibleCoupons = useMemo(() => {
-    let result = coupons.filter((c) => {
-      if (searchTerm.trim()) {
-        const q = searchTerm.trim().toLowerCase();
-        const haystack = [
-          c.promoTitle,
-          c.code,
-          c.sender,
-          c.source,
-          c.sourceRef ?? "",
-          c.type,
-          c.agentHandling,
-          c.agentSignOff,
-          c.participatingStores,
-          c.date,
-          c.startDate,
-          c.endDate,
-        ]
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    });
-
-    switch (filterOption) {
-      case "All":
-        break;
-      case "Active":
-        result = result.filter((c) => c.status === "Active");
-        break;
-      case "Inactive":
-        result = result.filter((c) => c.status === "Inactive");
-        break;
-      case "Alphabetical":
-        result = [...result].sort((a, b) => a.promoTitle.localeCompare(b.promoTitle));
-        break;
-      case "Start Date":
-        result = [...result].sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
-        break;
-      case "End Date":
-        result = [...result].sort((a, b) => (a.endDate || "").localeCompare(b.endDate || ""));
-        break;
-    }
-
-    return result;
-  }, [coupons, searchTerm, filterOption]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const rangeStart = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, totalCount);
 
   return (
     <div className="shell">
@@ -187,14 +207,44 @@ export default function CouponsTrackerPage() {
           </select>
         </div>
 
-        {loading ? (
+        {loading && coupons.length === 0 ? (
           <p>Loading coupons...</p>
         ) : (
-          <CouponsTable
-            couponsrecords={visibleCoupons}
-            onView={(coupon) => setViewCoupon(coupon)}
-            onEdit={(coupon) => setEditCoupon(coupon)}
-          />
+          <>
+            <CouponsTable
+              couponsrecords={coupons}
+              onView={(coupon) => setViewCoupon(coupon)}
+              onEdit={(coupon) => setEditCoupon(coupon)}
+            />
+            <div className="pagination">
+              <p className="pagination-info">
+                {totalCount === 0
+                  ? "No coupons found"
+                  : `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`}
+              </p>
+              <div className="pagination-controls">
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </button>
+                <span className="pagination-page">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  className="pagination-btn"
+                  disabled={page >= totalPages || loading}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </main>
 
