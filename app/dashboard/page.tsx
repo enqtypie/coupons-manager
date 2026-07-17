@@ -10,8 +10,17 @@ import { supabase } from "@/app/lib/supabase";
 import { rowToRecord } from "@/app/lib/types";
 import type { CouponRecord } from "@/app/lib/types";
 import "./dashboard.css";
+import AuthGuard from "../components/AuthGuard";
 
 export default function DashboardPage() {
+  return (
+    <AuthGuard>
+      <DashboardContent />
+    </AuthGuard>
+  );
+}
+
+function DashboardContent() {
   const [coupons, setCoupons] = useState<CouponRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -83,4 +92,5 @@ export default function DashboardPage() {
       </main>
     </div>
   );
+  
 }

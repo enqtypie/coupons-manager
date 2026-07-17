@@ -112,10 +112,16 @@ body {
   color: #185FA5;
   flex-shrink: 0;
 }
+.avatar-info {
+  min-width: 0;
+}
 .avatar-name {
   font-size: 13px;
   font-weight: 500;
   color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .avatar-role {
   font-size: 11px;

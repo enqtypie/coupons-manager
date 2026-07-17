@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Sidebar from "@/app/components/Sidebar";
+import AuthGuard from "@/app/components/AuthGuard";
 import CouponsTable from "@/app/components/CouponsTable";
 import ViewCouponModal from "@/app/components/ViewCouponModal";
 import CreateCouponModal from "@/app/components/CreateCouponModal";
@@ -15,7 +16,7 @@ type FilterOption = "All" | "Active" | "Inactive" | "Alphabetical" | "Start Date
 
 const PAGE_SIZE = 50;
 
-export default function CouponsTrackerPage() {
+function CouponsTrackerContent() {
   const [coupons, setCoupons] = useState<CouponRecord[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -260,5 +261,13 @@ export default function CouponsTrackerPage() {
         onSave={handleSaveEdit}
       />
     </div>
+  );
+}
+
+export default function CouponsTrackerPage() {
+  return (
+    <AuthGuard>
+      <CouponsTrackerContent />
+    </AuthGuard>
   );
 }

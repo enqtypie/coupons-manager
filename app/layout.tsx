@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/app/lib/auth-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,17 +18,11 @@ export const metadata: Metadata = {
   description: "Jet's Pizza — US Operations Coupons Manager",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
