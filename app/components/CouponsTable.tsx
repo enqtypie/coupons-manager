@@ -18,13 +18,14 @@ export default function CouponsTable({
 }) {
   return (
     <div className="table-card">
-      <p className="table-card-label">Jet's Pizza</p>
+      <p className="table-card-label">Jet&apos;s Pizza</p>
       <div className="table-card-scroll">
         <table className="coupons-table">
           <thead>
             <tr>
               <th>Date</th>
               <th>Status</th>
+              <th>Sign-off / Invite</th>
               <th>Source</th>
               <th>Sender</th>
               <th>Type</th>
@@ -45,6 +46,15 @@ export default function CouponsTable({
                   <span className={`status-badge ${STATUS_CLASS[r.status]}`}>
                     {r.status}
                   </span>
+                </td>
+                <td>
+                  {r.agentSignOff?.trim() ? (
+                    <span className="status-badge status-active">Signed Off</span>
+                  ) : r.calendarInviteCreated ? (
+                    <span className="status-badge status-active">Calendar created</span>
+                  ) : (
+                    <span className="status-badge status-expired">Not signed</span>
+                  )}
                 </td>
                 <td>{r.source}</td>
                 <td>{r.sender}</td>

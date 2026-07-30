@@ -5,7 +5,6 @@ import Sidebar from "@/app/components/Sidebar";
 import NotifCard from "@/app/components/NotifCard";
 import StatCards from "@/app/components/StatCards";
 import RequestChart from "@/app/components/RequestChart";
-import { REMINDERS } from "@/app/lib/data";
 import { supabase } from "@/app/lib/supabase";
 import { rowToRecord } from "@/app/lib/types";
 import type { CouponRecord } from "@/app/lib/types";
@@ -79,18 +78,72 @@ function DashboardContent() {
     .slice(0, 5)
     .map(({ text, sub }) => ({ text, sub }));
 
+// Reminders: urgent sign-off issues first, then day-check/calendar issues, then upcoming activation/deactivation
+const in7Days = new Date();
+in7Days.setDate(in7Days.getDate() + 7);
+const in7DaysStr = in7Days.toISOString().slice(0, 10);
+
+const signOffReminders = coupons
+  .filter((c) => !c.agentSignOff)
+  .map((c) => ({
+    text: `${c.code} — agent sign-off required`,
+    sub: c.promoTitle,
+    urgent: true,
+  }));
+
+const checklistReminders = coupons
+  .filter((c) => {
+    const missingDayCheck = !c.startOfDayCheck;
+    const missingCalendarInvite = missingDayCheck && !c.calendarInviteCreated;
+    return missingDayCheck || missingCalendarInvite;
+  })
+  .map((c) => {
+    const missing: string[] = [];
+    if (!c.startOfDayCheck) {
+      missing.push("day check");
+      if (!c.calendarInviteCreated) missing.push("calendar invite");
+    }
+    return {
+      text: `${c.code} — missing ${missing.join(", ")}`,
+      sub: c.promoTitle,
+      urgent: false,
+    };
+  });
+
+const activationReminders = coupons
+  .filter((c) => c.startDate && c.startDate >= today && c.startDate <= in7DaysStr)
+  .map((c) => ({
+    text: `${c.code} activating soon`,
+    sub: c.startDate,
+    urgent: false,
+  }));
+
+const deactivationReminders = coupons
+  .filter((c) => c.endDate && c.endDate >= today && c.endDate <= in7DaysStr)
+  .map((c) => ({
+    text: `${c.code} deactivating soon`,
+    sub: c.endDate,
+    urgent: false,
+  }));
+
+const reminders = [
+  ...signOffReminders,
+  ...checklistReminders,
+  ...activationReminders,
+  ...deactivationReminders,
+].slice(0, 5);
+
   return (
     <div className="shell">
       <Sidebar />
       <main className="main">
         <div className="notif-row">
           <NotifCard title="Upcoming Events" items={upcoming} variant="blue" />
-          <NotifCard title="Reminders" items={REMINDERS} variant="amber" />
+          <NotifCard title="Reminders" items={reminders} variant="amber" />
         </div>
         {loading ? <p>Loading stats...</p> : <StatCards counts={counts} />}
         <RequestChart />
       </main>
     </div>
   );
-  
 }
