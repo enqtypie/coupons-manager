@@ -48,6 +48,49 @@ CREATE TABLE IF NOT EXISTS coupons (
   INDEX idx_coupons_created_at (created_at)
 );
 
+-- Quarterly Hot Deals: each CSV import creates one named batch (e.g. "Q3 Hot
+-- Deals"). Deal columns vary quarter to quarter, so they're stored as rows
+-- rather than fixed columns; per-store band values live in a JSON blob since
+-- which deals apply also varies per batch.
+CREATE TABLE IF NOT EXISTS hot_deals_batches (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS hot_deals_deals (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  batch_id INT NOT NULL,
+  position INT NOT NULL,
+  kind ENUM('flat', 'band') NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  code VARCHAR(100) NOT NULL,
+  FOREIGN KEY (batch_id) REFERENCES hot_deals_batches(id) ON DELETE CASCADE,
+  INDEX idx_hot_deals_deals_batch (batch_id)
+);
+
+CREATE TABLE IF NOT EXISTS hot_deals_store_rows (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  batch_id INT NOT NULL,
+  store_id VARCHAR(50) NOT NULL,
+  expiration_date DATE NULL,
+  band_values JSON NULL,
+  FOREIGN KEY (batch_id) REFERENCES hot_deals_batches(id) ON DELETE CASCADE,
+  INDEX idx_hot_deals_store_rows_batch (batch_id)
+);
+
+-- Manually-added dashboard reminders (separate from the auto-generated
+-- sign-off/checklist/activation reminders, which are derived from coupons
+-- on the fly and never stored).
+CREATE TABLE IF NOT EXISTS manual_reminders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  text VARCHAR(255) NOT NULL,
+  due_date DATE NULL,
+  created_by INT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
 -- One-time bootstrap: after you sign up through the app once (so a users row
 -- exists), promote yourself to an approved admin so you can approve everyone
 -- else from the Settings page:

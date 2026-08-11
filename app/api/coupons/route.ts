@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { query, execute } from "@/app/lib/db";
 import { requireApprovedUser, authErrorResponse } from "@/app/lib/auth-server";
 import { rowToRecord, type CouponRow } from "@/app/lib/types";
+import { sweepExpiredCoupons } from "@/app/lib/coupons-sweep";
 
 export async function GET(request: Request) {
   try {
@@ -9,6 +10,8 @@ export async function GET(request: Request) {
   } catch (e) {
     return authErrorResponse(e);
   }
+
+  await sweepExpiredCoupons();
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search")?.trim() ?? "";
@@ -97,6 +100,8 @@ export async function POST(request: Request) {
       Boolean(body.calendarInviteCreated),
     ]
   );
+
+  await sweepExpiredCoupons();
 
   return NextResponse.json({ id: result.insertId });
 }

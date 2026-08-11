@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { execute } from "@/app/lib/db";
 import { requireApprovedUser, authErrorResponse } from "@/app/lib/auth-server";
+import { sweepExpiredCoupons } from "@/app/lib/coupons-sweep";
 
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
@@ -43,6 +44,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       id,
     ]
   );
+
+  await sweepExpiredCoupons();
 
   return NextResponse.json({ ok: true });
 }

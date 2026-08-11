@@ -80,7 +80,7 @@ export default function EditCouponModal({
             <input name="code" value={form.code ?? ""} onChange={handleChange} required />
           </label>
           <label>Promo Link
-            <input type="url" name="promoLink" value={form.promoLink ?? ""} onChange={handleChange} />
+            <input name="promoLink" value={form.promoLink ?? ""} onChange={handleChange} />
           </label>
           <label>Redemption Type
             <select name="redemptionType" value={form.redemptionType ?? ""} onChange={handleChange} required>

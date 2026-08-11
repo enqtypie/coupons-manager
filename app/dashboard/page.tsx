@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/app/components/Sidebar";
 import NotifCard from "@/app/components/NotifCard";
+import RemindersCard, { type ReminderItem } from "@/app/components/RemindersCard";
 import StatCards from "@/app/components/StatCards";
 import RequestChart from "@/app/components/RequestChart";
 import type { CouponRecord } from "@/app/lib/types";
+import type { ManualReminder } from "@/app/lib/reminder-types";
+import { formatDate } from "@/app/lib/date";
 import "./dashboard.css";
 import AuthGuard from "../components/AuthGuard";
 
@@ -21,6 +24,8 @@ function DashboardContent() {
   const [coupons, setCoupons] = useState<CouponRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [manualReminders, setManualReminders] = useState<ManualReminder[]>([]);
+
   useEffect(() => {
     async function loadCoupons() {
       const res = await fetch("/api/coupons", { cache: "no-store" });
@@ -34,6 +39,37 @@ function DashboardContent() {
     }
     loadCoupons();
   }, []);
+
+  useEffect(() => {
+    async function loadReminders() {
+      const res = await fetch("/api/reminders", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setManualReminders(data.reminders as ManualReminder[]);
+      }
+    }
+    loadReminders();
+  }, []);
+
+  async function handleAddReminder(text: string, dueDate: string) {
+    const res = await fetch("/api/reminders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, dueDate: dueDate || null }),
+    });
+    if (res.ok) {
+      const created = await res.json();
+      setManualReminders((prev) => [
+        ...prev,
+        { id: created.id, text: created.text, dueDate: created.dueDate, createdAt: "" },
+      ]);
+    }
+  }
+
+  async function handleRemoveReminder(id: number) {
+    setManualReminders((prev) => prev.filter((r) => r.id !== id));
+    await fetch(`/api/reminders/${id}`, { method: "DELETE" });
+  }
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -66,10 +102,10 @@ function DashboardContent() {
     .flatMap((c) => {
       const events = [];
       if (c.startDate && c.startDate >= today && c.startDate <= in60DaysStr) {
-        events.push({ text: `${c.code} activation`, sub: c.startDate, sortDate: c.startDate });
+        events.push({ text: `${c.code} activation`, sub: formatDate(c.startDate), sortDate: c.startDate });
       }
       if (c.endDate && c.endDate >= today && c.endDate <= in60DaysStr) {
-        events.push({ text: `${c.code} deactivation`, sub: c.endDate, sortDate: c.endDate });
+        events.push({ text: `${c.code} deactivation`, sub: formatDate(c.endDate), sortDate: c.endDate });
       }
       return events;
     })
@@ -113,7 +149,7 @@ const activationReminders = coupons
   .filter((c) => c.startDate && c.startDate >= today && c.startDate <= in7DaysStr)
   .map((c) => ({
     text: `${c.code} activating soon`,
-    sub: c.startDate,
+    sub: formatDate(c.startDate),
     urgent: false,
   }));
 
@@ -121,16 +157,25 @@ const deactivationReminders = coupons
   .filter((c) => c.endDate && c.endDate >= today && c.endDate <= in7DaysStr)
   .map((c) => ({
     text: `${c.code} deactivating soon`,
-    sub: c.endDate,
+    sub: formatDate(c.endDate),
     urgent: false,
   }));
 
-const reminders = [
+const autoReminders = [
   ...signOffReminders,
   ...checklistReminders,
   ...activationReminders,
   ...deactivationReminders,
 ].slice(0, 5);
+
+const manualReminderItems: ReminderItem[] = manualReminders.map((r) => ({
+  id: r.id,
+  text: r.text,
+  sub: r.dueDate ? `Due ${formatDate(r.dueDate)}` : "Manual reminder",
+  removable: true,
+}));
+
+const reminders: ReminderItem[] = [...manualReminderItems, ...autoReminders];
 
   return (
     <div className="shell">
@@ -138,7 +183,11 @@ const reminders = [
       <main className="main">
         <div className="notif-row">
           <NotifCard title="Upcoming Events" items={upcoming} variant="blue" />
-          <NotifCard title="Reminders" items={reminders} variant="amber" />
+          <RemindersCard
+            items={reminders}
+            onAdd={handleAddReminder}
+            onRemove={handleRemoveReminder}
+          />
         </div>
         {loading ? <p>Loading stats...</p> : <StatCards counts={counts} />}
         <RequestChart />
