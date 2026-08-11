@@ -8,6 +8,7 @@ export type ReminderItem = {
   text: string;
   sub: string;
   removable?: boolean;
+  urgent?: boolean;
 };
 
 export default function RemindersCard({
@@ -83,29 +84,33 @@ export default function RemindersCard({
       {items.length === 0 && !isAdding ? (
         <p className="notif-empty">No reminders right now.</p>
       ) : (
-        items.map((item, i) => (
-          <div
-            key={item.id ?? i}
-            className={`notif-item${i === items.length - 1 ? " notif-item--last" : ""}`}
-          >
-            <span className="notif-dot" style={{ background: "#EF9F27" }} />
-            <span className="notif-text">
-              {item.text}
-              <span className="notif-sub">{item.sub}</span>
-            </span>
-            {item.removable && item.id !== undefined && (
-              <button
-                type="button"
-                className="notif-remove-btn"
-                onClick={() => onRemove(item.id as number)}
-                aria-label="Remove reminder"
-                title="Remove reminder"
-              >
-                <X size={12} />
-              </button>
-            )}
-          </div>
-        ))
+        <div className="notif-list">
+          {items.map((item, i) => (
+            <div
+              key={item.id ?? i}
+              className={`notif-item${item.urgent ? " notif-item--urgent" : ""}${
+                i === items.length - 1 ? " notif-item--last" : ""
+              }`}
+            >
+              <span className="notif-dot" style={{ background: "#EF9F27" }} />
+              <span className="notif-text">
+                {item.text}
+                <span className="notif-sub">{item.sub}</span>
+              </span>
+              {item.removable && item.id !== undefined && (
+                <button
+                  type="button"
+                  className="notif-remove-btn"
+                  onClick={() => onRemove(item.id as number)}
+                  aria-label="Remove reminder"
+                  title="Remove reminder"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

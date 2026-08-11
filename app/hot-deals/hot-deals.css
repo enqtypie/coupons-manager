@@ -1,7 +1,21 @@
+/* Self-contained layout: this owns its own vertical rhythm so the table's
+   position never depends on how the surrounding page lays out its children. */
+.hotdeals-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.hotdeals-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .hotdeals-tabs {
   display: flex;
   gap: 6px;
-  margin: 18px 0 14px;
   flex-wrap: wrap;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
@@ -25,14 +39,13 @@
 }
 
 .hotdeals-search {
-  margin: 18px 0 0;
   max-width: 360px;
 }
 
 .hotdeals-search-count {
   font-size: 12px;
   color: #6b7280;
-  margin: 8px 0 0;
+  margin: 0;
 }
 
 .hotdeals-toolbar {
@@ -40,8 +53,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 14px;
-  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 .hotdeals-flat-deals {

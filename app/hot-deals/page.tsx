@@ -128,7 +128,7 @@ function HotDealsContent() {
         ) : batches.length === 0 ? (
           <p className="hotdeals-empty">No hot deals imported yet. Add one to get started.</p>
         ) : (
-          <>
+          <div className="hotdeals-content">
             <div className="hotdeals-tabs">
               {batches.map((b) => (
                 <button
@@ -145,7 +145,7 @@ function HotDealsContent() {
             {loadingDetail || !detail ? (
               <p>Loading batch...</p>
             ) : (
-              <>
+              <div className="hotdeals-panel">
                 <div className="search-wrap hotdeals-search">
                   <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="11" cy="11" r="8" />
@@ -240,9 +240,9 @@ function HotDealsContent() {
                     </table>
                   </div>
                 </div>
-              </>
+              </div>
             )}
-          </>
+          </div>
         )}
       </main>
 

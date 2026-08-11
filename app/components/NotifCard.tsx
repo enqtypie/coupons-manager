@@ -23,18 +23,22 @@ export default function NotifCard({ title, items, variant }: NotifCardProps) {
         {variant === "blue" ? <CalendarDays size={14} /> : <Bell size={14} />}
         {title}
       </div>
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className={`notif-item${i === items.length - 1 ? " notif-item--last" : ""}`}
-        >
-          <span className="notif-dot" style={{ background: c.dot }} />
-          <span className="notif-text">
-            {item.text}
-            <span className="notif-sub">{item.sub}</span>
-          </span>
-        </div>
-      ))}
+      <div className="notif-list">
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className={`notif-item${item.urgent ? " notif-item--urgent" : ""}${
+              i === items.length - 1 ? " notif-item--last" : ""
+            }`}
+          >
+            <span className="notif-dot" style={{ background: c.dot }} />
+            <span className="notif-text">
+              {item.text}
+              <span className="notif-sub">{item.sub}</span>
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

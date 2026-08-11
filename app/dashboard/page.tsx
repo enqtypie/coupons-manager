@@ -93,6 +93,11 @@ function DashboardContent() {
     discounts: { value: discountsCount, sub: "Active this period" },
   };
 
+  // "Near or same day" = today or tomorrow — that's what turns an item red.
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
   // Upcoming Events: coupons with a start or end date in the near future (next 60 days)
   const in60Days = new Date();
   in60Days.setDate(in60Days.getDate() + 60);
@@ -102,32 +107,40 @@ function DashboardContent() {
     .flatMap((c) => {
       const events = [];
       if (c.startDate && c.startDate >= today && c.startDate <= in60DaysStr) {
-        events.push({ text: `${c.code} activation`, sub: formatDate(c.startDate), sortDate: c.startDate });
+        events.push({
+          text: `${c.code} activation`,
+          sub: formatDate(c.startDate),
+          sortDate: c.startDate,
+          urgent: c.startDate <= tomorrowStr,
+        });
       }
       if (c.endDate && c.endDate >= today && c.endDate <= in60DaysStr) {
-        events.push({ text: `${c.code} deactivation`, sub: formatDate(c.endDate), sortDate: c.endDate });
+        events.push({
+          text: `${c.code} deactivation`,
+          sub: formatDate(c.endDate),
+          sortDate: c.endDate,
+          urgent: c.endDate <= tomorrowStr,
+        });
       }
       return events;
     })
     .sort((a, b) => a.sortDate.localeCompare(b.sortDate))
-    .slice(0, 5)
-    .map(({ text, sub }) => ({ text, sub }));
+    .slice(0, 15)
+    .map(({ text, sub, urgent }) => ({ text, sub, urgent }));
 
-// Reminders: urgent sign-off issues first, then day-check/calendar issues, then upcoming activation/deactivation
-const in7Days = new Date();
-in7Days.setDate(in7Days.getDate() + 7);
-const in7DaysStr = in7Days.toISOString().slice(0, 10);
-
+// Reminders: only for coupons that are still Active — an ended coupon's
+// sign-off/checklist is no longer anyone's problem.
 const signOffReminders = coupons
-  .filter((c) => !c.agentSignOff)
+  .filter((c) => c.status === "Active" && !c.agentSignOff)
   .map((c) => ({
     text: `${c.code} — agent sign-off required`,
     sub: c.promoTitle,
-    urgent: true,
+    urgent: Boolean(c.startDate && c.startDate <= tomorrowStr),
   }));
 
 const checklistReminders = coupons
   .filter((c) => {
+    if (c.status !== "Active") return false;
     const missingDayCheck = !c.startOfDayCheck;
     const missingCalendarInvite = missingDayCheck && !c.calendarInviteCreated;
     return missingDayCheck || missingCalendarInvite;
@@ -141,41 +154,23 @@ const checklistReminders = coupons
     return {
       text: `${c.code} — missing ${missing.join(", ")}`,
       sub: c.promoTitle,
-      urgent: false,
+      urgent: Boolean(c.startDate && c.startDate <= tomorrowStr),
     };
   });
 
-const activationReminders = coupons
-  .filter((c) => c.startDate && c.startDate >= today && c.startDate <= in7DaysStr)
-  .map((c) => ({
-    text: `${c.code} activating soon`,
-    sub: formatDate(c.startDate),
-    urgent: false,
-  }));
-
-const deactivationReminders = coupons
-  .filter((c) => c.endDate && c.endDate >= today && c.endDate <= in7DaysStr)
-  .map((c) => ({
-    text: `${c.code} deactivating soon`,
-    sub: formatDate(c.endDate),
-    urgent: false,
-  }));
-
-const autoReminders = [
-  ...signOffReminders,
-  ...checklistReminders,
-  ...activationReminders,
-  ...deactivationReminders,
-].slice(0, 5);
+// Activation/deactivation reminders are deliberately left out here — they'd
+// just duplicate what's already shown in the Upcoming Events card above.
+const autoReminders = [...signOffReminders, ...checklistReminders];
 
 const manualReminderItems: ReminderItem[] = manualReminders.map((r) => ({
   id: r.id,
   text: r.text,
   sub: r.dueDate ? `Due ${formatDate(r.dueDate)}` : "Manual reminder",
   removable: true,
+  urgent: Boolean(r.dueDate && r.dueDate <= tomorrowStr),
 }));
 
-const reminders: ReminderItem[] = [...manualReminderItems, ...autoReminders];
+const reminders: ReminderItem[] = [...manualReminderItems, ...autoReminders].slice(0, 15);
 
   return (
     <div className="shell">

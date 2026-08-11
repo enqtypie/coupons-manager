@@ -23,6 +23,7 @@ export type StatCard = {
 export interface NotifItem {
   text: string;
   sub: string;
+  urgent?: boolean;
 }
 
 export type CouponStatus = "Active" | "Inactive";
