@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/app/components/Sidebar";
 import AuthGuard from "@/app/components/AuthGuard";
-import { supabase } from "@/app/lib/supabase";
 import { useAuth, getInitials, roleLabel, displayNameOrEmail, type Profile } from "@/app/lib/auth-context";
 import "../coupons-tracker/coupons-tracker.css";
 import "./settings.css";
@@ -27,17 +26,20 @@ function SettingsContent() {
   const [savingName, setSavingName] = useState(false);
   const [nameSaved, setNameSaved] = useState(false);
 
-  useEffect(() => {
+  // Keep the input in sync when the loaded display name changes (e.g. after refreshProfile()).
+  const [prevDisplayName, setPrevDisplayName] = useState(myProfile?.display_name ?? null);
+  if ((myProfile?.display_name ?? null) !== prevDisplayName) {
+    setPrevDisplayName(myProfile?.display_name ?? null);
     setNameInput(myProfile?.display_name ?? "");
-  }, [myProfile?.display_name]);
+  }
 
   async function loadProfiles() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setProfiles(data as Profile[]);
+    const res = await fetch("/api/profiles", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      setProfiles(data.profiles as Profile[]);
+    }
     setLoading(false);
   }
 
@@ -46,12 +48,12 @@ function SettingsContent() {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const res = await fetch("/api/profiles", { cache: "no-store" });
       if (cancelled) return;
-      if (!error && data) setProfiles(data as Profile[]);
+      if (res.ok) {
+        const data = await res.json();
+        setProfiles(data.profiles as Profile[]);
+      }
       setLoading(false);
     }
     load();
@@ -64,31 +66,38 @@ function SettingsContent() {
     if (!user) return;
     setSavingName(true);
     setNameSaved(false);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ display_name: nameInput.trim() || null })
-      .eq("id", user.id);
+    const res = await fetch("/api/profiles/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ displayName: nameInput.trim() || null }),
+    });
     setSavingName(false);
-    if (!error) {
+    if (res.ok) {
       await refreshProfile();
       setNameSaved(true);
       setTimeout(() => setNameSaved(false), 2000);
     }
   }
 
-  async function handleApprove(id: string, role: Role | null) {
-    await supabase.from("profiles").update({ status: "approved", role: role ?? "view" }).eq("id", id);
+  async function updateProfile(id: number, body: { status?: string; role?: Role | null }) {
+    await fetch(`/api/profiles/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
     await loadProfiles();
   }
 
-  async function handleReject(id: string) {
-    await supabase.from("profiles").update({ status: "rejected" }).eq("id", id);
-    await loadProfiles();
+  async function handleApprove(id: number, role: Role | null) {
+    await updateProfile(id, { status: "approved", role: role ?? "view" });
   }
 
-  async function handleRoleChange(id: string, role: Role) {
-    await supabase.from("profiles").update({ role }).eq("id", id);
-    await loadProfiles();
+  async function handleReject(id: number) {
+    await updateProfile(id, { status: "rejected" });
+  }
+
+  async function handleRoleChange(id: number, role: Role) {
+    await updateProfile(id, { role });
   }
 
   return (

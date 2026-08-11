@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/app/lib/supabase";
-import { rowToRecord } from "@/app/lib/types";
 import type { CouponRecord } from "@/app/lib/types";
 
 function getLast10Days(): string[] {
@@ -27,11 +25,12 @@ export default function RequestChart() {
 
   useEffect(() => {
     async function loadCoupons() {
-      const { data, error } = await supabase.from("coupons").select("*");
-      if (error) {
-        console.error("Failed to load chart data:", error.message);
+      const res = await fetch("/api/coupons", { cache: "no-store" });
+      if (!res.ok) {
+        console.error("Failed to load chart data:", res.statusText);
       } else {
-        setCoupons(data.map(rowToRecord));
+        const data = await res.json();
+        setCoupons(data.coupons as CouponRecord[]);
       }
       setLoading(false);
     }

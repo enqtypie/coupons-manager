@@ -32,7 +32,7 @@ export type RedemptionType = "Multi" | "Single";
 export type AgentHandling = "Mark" | "Noli";
 
 export type CouponRecord = {
-  id: string;
+  id: number;
   date: string;
   status: CouponStatus;
   source: CouponSource;
@@ -53,7 +53,7 @@ export type CouponRecord = {
 };
 
 export type CouponRow = {
-  id: string;
+  id: number;
   date: string;
   status: CouponStatus;
   source: CouponSource;
@@ -70,7 +70,8 @@ export type CouponRow = {
   agent_handling: AgentHandling;
   agent_sign_off: string | null;
   start_of_day_check: string | null;
-  calendar_invite_created: boolean;
+  // mysql2 returns TINYINT(1) columns as 0/1, not a real boolean.
+  calendar_invite_created: number | boolean;
 };
 
 export function rowToRecord(row: CouponRow): CouponRecord {
@@ -92,6 +93,6 @@ export function rowToRecord(row: CouponRow): CouponRecord {
     agentHandling: row.agent_handling,
     agentSignOff: row.agent_sign_off ?? "",
     startOfDayCheck: row.start_of_day_check ?? "",
-    calendarInviteCreated: row.calendar_invite_created,
+    calendarInviteCreated: Boolean(row.calendar_invite_created),
   };
 }

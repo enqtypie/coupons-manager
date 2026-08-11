@@ -2,7 +2,6 @@
 
 import { Clock, XCircle } from "lucide-react";
 import { useAuth } from "@/app/lib/auth-context";
-import { supabase } from "@/app/lib/supabase";
 import "../login/auth.css";
 
 export default function PendingPage() {
@@ -10,7 +9,7 @@ export default function PendingPage() {
   const isRejected = profile?.status === "rejected";
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
   }
 

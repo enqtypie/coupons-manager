@@ -7,8 +7,6 @@ import CouponsTable from "@/app/components/CouponsTable";
 import ViewCouponModal from "@/app/components/ViewCouponModal";
 import CreateCouponModal from "@/app/components/CreateCouponModal";
 import EditCouponModal from "@/app/components/EditCouponModal";
-import { supabase } from "@/app/lib/supabase";
-import { rowToRecord } from "@/app/lib/types";
 import type { CouponRecord } from "@/app/lib/types";
 import "./coupons-tracker.css";
 
@@ -52,53 +50,22 @@ function CouponsTrackerContent() {
     async function loadCoupons() {
       setLoading(true);
 
-      let query = supabase.from("coupons").select("*", { count: "exact" });
+      const params = new URLSearchParams();
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      params.set("filter", filterOption);
+      params.set("page", String(page));
+      params.set("pageSize", String(PAGE_SIZE));
 
-      if (debouncedSearch) {
-        const pattern = `%${debouncedSearch}%`;
-        query = query.or(
-          [
-            `promo_title.ilike.${pattern}`,
-            `code.ilike.${pattern}`,
-            `sender.ilike.${pattern}`,
-            `source_ref.ilike.${pattern}`,
-            `agent_sign_off.ilike.${pattern}`,
-            `participating_stores.ilike.${pattern}`,
-          ].join(",")
-        );
-      }
-
-      switch (filterOption) {
-        case "Active":
-          query = query.eq("status", "Active").order("created_at", { ascending: false });
-          break;
-        case "Inactive":
-          query = query.eq("status", "Inactive").order("created_at", { ascending: false });
-          break;
-        case "Alphabetical":
-          query = query.order("promo_title", { ascending: true });
-          break;
-        case "Start Date":
-          query = query.order("start_date", { ascending: true });
-          break;
-        case "End Date":
-          query = query.order("end_date", { ascending: true });
-          break;
-        default:
-          query = query.order("created_at", { ascending: false });
-      }
-
-      const from = (page - 1) * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-      const { data, error, count } = await query.range(from, to);
+      const res = await fetch(`/api/coupons?${params.toString()}`, { cache: "no-store" });
 
       if (requestId !== latestRequestId.current) return; // a newer request has since started
 
-      if (error) {
-        console.error("Failed to load coupons:", error.message);
+      if (!res.ok) {
+        console.error("Failed to load coupons:", res.statusText);
       } else {
-        setCoupons((data ?? []).map(rowToRecord));
-        setTotalCount(count ?? 0);
+        const data = await res.json();
+        setCoupons(data.coupons as CouponRecord[]);
+        setTotalCount(data.total ?? 0);
       }
       setLoading(false);
     }
@@ -107,27 +74,13 @@ function CouponsTrackerContent() {
   }, [page, debouncedSearch, filterOption, reloadToken]);
 
   async function handleCreate(form: Omit<CouponRecord, "id">) {
-    const { error } = await supabase.from("coupons").insert({
-      date: form.date,
-      status: form.status,
-      source: form.source,
-      source_ref: form.sourceRef || null,
-      sender: form.sender,
-      type: form.type,
-      promo_title: form.promoTitle,
-      code: form.code,
-      promo_link: form.promoLink || null,
-      redemption_type: form.redemptionType,
-      start_date: form.startDate || null,
-      end_date: form.endDate || null,
-      participating_stores: form.participatingStores || null,
-      agent_handling: form.agentHandling,
-      agent_sign_off: form.agentSignOff || null,
-      start_of_day_check: form.startOfDayCheck || null,
-      calendar_invite_created: form.calendarInviteCreated,
+    const res = await fetch("/api/coupons", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
     });
-    if (error) {
-      console.error("Failed to create coupon:", error.message);
+    if (!res.ok) {
+      console.error("Failed to create coupon:", res.statusText);
       return;
     }
     if (page === 1) setReloadToken((t) => t + 1);
@@ -135,31 +88,13 @@ function CouponsTrackerContent() {
   }
 
   async function handleSaveEdit(updated: CouponRecord) {
-    const { error } = await supabase
-      .from("coupons")
-      .update({
-        date: updated.date,
-        status: updated.status,
-        source: updated.source,
-        source_ref: updated.sourceRef || null,
-        sender: updated.sender,
-        type: updated.type,
-        promo_title: updated.promoTitle,
-        code: updated.code,
-        promo_link: updated.promoLink || null,
-        redemption_type: updated.redemptionType,
-        start_date: updated.startDate || null,
-        end_date: updated.endDate || null,
-        participating_stores: updated.participatingStores || null,
-        agent_handling: updated.agentHandling,
-        agent_sign_off: updated.agentSignOff || null,
-        start_of_day_check: updated.startOfDayCheck || null,
-        calendar_invite_created: updated.calendarInviteCreated,
-      })
-      .eq("id", updated.id);
-
-    if (error) {
-      console.error("Failed to update coupon:", error.message);
+    const res = await fetch(`/api/coupons/${updated.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated),
+    });
+    if (!res.ok) {
+      console.error("Failed to update coupon:", res.statusText);
       return;
     }
     setReloadToken((t) => t + 1);

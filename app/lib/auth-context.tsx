@@ -1,19 +1,19 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/app/lib/supabase";
 
 export type Profile = {
-  id: string;
+  id: number;
   email: string;
   display_name: string | null;
   status: "pending" | "approved" | "rejected";
   role: "view" | "edit" | "admin" | null;
 };
 
+export type SessionUser = { id: number; email: string };
+
 type AuthContextType = {
-  user: User | null;
+  user: SessionUser | null;
   profile: Profile | null;
   loading: boolean;
   refreshProfile: () => Promise<void>;
@@ -26,45 +26,30 @@ const AuthContext = createContext<AuthContextType>({
   refreshProfile: async () => {},
 });
 
+async function fetchMe(): Promise<Profile | null> {
+  const res = await fetch("/api/auth/me", { cache: "no-store" });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.user ?? null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function loadProfile(userId: string) {
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
-    if (error) console.error("Failed to load profile:", error.message);
-    setProfile(data as Profile | null);
-  }
-
   async function refreshProfile() {
-    if (user) await loadProfile(user.id);
+    const fresh = await fetchMe();
+    setProfile(fresh);
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) console.error("getSession failed:", error.message);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
+    fetchMe().then((fresh) => {
+      setProfile(fresh);
+      setLoading(false);
     });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setLoading(true);
-        loadProfile(session.user.id).finally(() => setLoading(false));
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => listener.subscription.unsubscribe();
   }, []);
+
+  const user: SessionUser | null = profile ? { id: profile.id, email: profile.email } : null;
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, refreshProfile }}>

@@ -5,8 +5,6 @@ import Sidebar from "@/app/components/Sidebar";
 import NotifCard from "@/app/components/NotifCard";
 import StatCards from "@/app/components/StatCards";
 import RequestChart from "@/app/components/RequestChart";
-import { supabase } from "@/app/lib/supabase";
-import { rowToRecord } from "@/app/lib/types";
 import type { CouponRecord } from "@/app/lib/types";
 import "./dashboard.css";
 import AuthGuard from "../components/AuthGuard";
@@ -25,11 +23,12 @@ function DashboardContent() {
 
   useEffect(() => {
     async function loadCoupons() {
-      const { data, error } = await supabase.from("coupons").select("*");
-      if (error) {
-        console.error("Failed to load dashboard data:", error.message);
+      const res = await fetch("/api/coupons", { cache: "no-store" });
+      if (!res.ok) {
+        console.error("Failed to load dashboard data:", res.statusText);
       } else {
-        setCoupons(data.map(rowToRecord));
+        const data = await res.json();
+        setCoupons(data.coupons as CouponRecord[]);
       }
       setLoading(false);
     }

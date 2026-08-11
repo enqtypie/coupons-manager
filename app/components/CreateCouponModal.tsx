@@ -109,7 +109,7 @@ export default function CreateCouponModal({
           <input name="code" value={form.code} onChange={handleChange} required />
         </label>
         <label>Promo Link
-          <input type="url" name="promoLink" value={form.promoLink} onChange={handleChange} placeholder="https://..." />
+          <input name="promoLink" value={form.promoLink} onChange={handleChange} placeholder="https://..." />
         </label>
         <label>Redemption Type
           <select name="redemptionType" value={form.redemptionType} onChange={handleChange} required>

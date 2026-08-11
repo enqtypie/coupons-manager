@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Clock, Lock, Loader2, Mail, Tag } from "lucide-react";
-import { supabase } from "@/app/lib/supabase";
+import { useAuth } from "@/app/lib/auth-context";
 import "./auth.css";
 
 type Mode = "signin" | "signup";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshProfile } = useAuth();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,21 +29,32 @@ export default function LoginPage() {
     setLoading(true);
 
     if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
       setLoading(false);
-      if (error) {
-        setError(error.message);
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "Failed to sign in.");
         return;
       }
+      await refreshProfile();
       router.push("/dashboard");
       return;
     }
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
     setLoading(false);
 
-    if (error) {
-      setError(error.message);
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      setError(data?.error ?? "Failed to create account.");
       return;
     }
     setAccountCreated(true);

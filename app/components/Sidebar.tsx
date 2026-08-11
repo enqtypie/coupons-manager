@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { NAV } from "@/app/lib/data";
-import { supabase } from "@/app/lib/supabase";
 import { useAuth, getInitials, roleLabel, displayNameOrEmail } from "@/app/lib/auth-context";
 
 const STORAGE_KEY = "sidebarCollapsed";
@@ -13,7 +12,7 @@ const STORAGE_KEY = "sidebarCollapsed";
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -27,7 +26,8 @@ export default function Sidebar() {
   }, [collapsed, hydrated]);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
+    await refreshProfile();
     router.push("/login");
   }
 
