@@ -76,7 +76,7 @@ function DashboardContent() {
   const activeCount = coupons.filter((c) => c.status === "Active").length;
   const expiredCount = coupons.filter((c) => c.endDate && c.endDate < today).length;
   const hotDealsCount = coupons.filter((c) => c.type === "Hot Deals").length;
-  const discountsCount = coupons.filter((c) => c.type === "Discount").length;
+  const discountsCount = coupons.filter((c) => c.type === "LOKE Discount").length;
   const storeSet = new Set(
     coupons.flatMap((c) =>
       (c.participatingStores || "")

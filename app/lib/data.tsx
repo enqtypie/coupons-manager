@@ -62,7 +62,7 @@ export const STATS: StatCard[] = [
     key: "hotDeals",
   },
   {
-    label: "Total Discounts",
+    label: "Total LOKE Discounts",
     value: 0,
     sub: "",
     accent: "#1D9E75",

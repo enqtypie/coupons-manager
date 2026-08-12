@@ -19,7 +19,7 @@ export default function CreateCouponModal({
     source: "Email" as const,
     sourceRef: "",
     sender: "",
-    type: "Discount" as const,
+    type: "LOKE Discount" as const,
     promoTitle: "",
     code: "",
     promoLink: "",
@@ -30,19 +30,14 @@ export default function CreateCouponModal({
     agentHandling: "Mark" as const,
     agentSignOff: "",
     startOfDayCheck: "",
-    calendarInviteCreated: false,
+    calendarInviteCreated: "",
   });
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) {
-    const { name, value, type } = e.target;
-    if (type === "checkbox") {
-      const checked = (e.target as HTMLInputElement).checked;
-      setForm({ ...form, [name]: checked });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -54,7 +49,7 @@ export default function CreateCouponModal({
       source: "Email",
       sourceRef: "",
       sender: "",
-      type: "Discount",
+      type: "LOKE Discount",
       promoTitle: "",
       code: "",
       promoLink: "",
@@ -65,7 +60,7 @@ export default function CreateCouponModal({
       agentHandling: "Mark",
       agentSignOff: "",
       startOfDayCheck: "",
-      calendarInviteCreated: false,
+      calendarInviteCreated: "",
     });
     onClose();
   }
@@ -98,7 +93,7 @@ export default function CreateCouponModal({
         </label>
         <label>Type
           <select name="type" value={form.type} onChange={handleChange} required>
-            <option value="Discount">Discount</option>
+            <option value="LOKE Discount">LOKE Discount</option>
             <option value="Hot Deals">Hot Deals</option>
           </select>
         </label>
@@ -120,7 +115,7 @@ export default function CreateCouponModal({
         <label>Start Date
           <input type="date" name="startDate" value={form.startDate} onChange={handleChange} />
         </label>
-        <label>End Date
+        <label>End Date (leave blank for no expiry)
           <input type="date" name="endDate" value={form.endDate} onChange={handleChange} />
         </label>
         <label>Participating Stores
@@ -138,9 +133,8 @@ export default function CreateCouponModal({
         <label>Start of Day Check
           <input type="date" name="startOfDayCheck" value={form.startOfDayCheck} onChange={handleChange} />
         </label>
-        <label className="checkbox-label">
-          <input type="checkbox" name="calendarInviteCreated" checked={form.calendarInviteCreated} onChange={handleChange} />
-          Calendar Invite Created
+        <label>Calendar Invite Created
+          <input type="date" name="calendarInviteCreated" value={form.calendarInviteCreated} onChange={handleChange} />
         </label>
         <div className="form-actions">
           <button type="button" className="row-action" onClick={onClose}>Cancel</button>

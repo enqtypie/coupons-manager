@@ -9,3 +9,9 @@ export function formatDate(value: string | null | undefined): string {
   const [, year, month, day] = match;
   return `${month}/${day}/${year}`;
 }
+
+// A blank End Date means the coupon never expires — show that explicitly
+// instead of a blank cell.
+export function formatEndDate(value: string | null | undefined): string {
+  return formatDate(value) || "No Expiry";
+}

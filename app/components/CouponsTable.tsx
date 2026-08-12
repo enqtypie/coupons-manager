@@ -1,7 +1,7 @@
 "use client";
 
 import type { CouponRecord, CouponStatus } from "@/app/lib/types";
-import { formatDate } from "@/app/lib/date";
+import { formatDate, formatEndDate } from "@/app/lib/date";
 
 const STATUS_CLASS: Record<CouponStatus, string> = {
   Active: "status-active",
@@ -64,7 +64,7 @@ export default function CouponsTable({
                 <td>{r.code}</td>
                 <td>{r.redemptionType}</td>
                 <td>{formatDate(r.startDate)}</td>
-                <td>{formatDate(r.endDate)}</td>
+                <td>{formatEndDate(r.endDate)}</td>
                 <td>{r.agentHandling}</td>
                 <td>
                   <div className="row-actions">

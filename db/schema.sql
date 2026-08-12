@@ -1,94 +1,85 @@
--- Run this in MySQL Workbench against your local server to set up the database.
--- File > Open SQL Script > run (the lightning bolt icon), or paste into a new query tab.
-
-CREATE DATABASE IF NOT EXISTS coupons_manager
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE coupons_manager;
+-- Run this in the Supabase SQL Editor (Project > SQL Editor > New query) against
+-- your Supabase Postgres database, or against any Postgres instance.
 
 CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   display_name VARCHAR(120) NULL,
-  status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
-  role ENUM('view', 'edit', 'admin') NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  role TEXT NULL CHECK (role IN ('view', 'edit', 'admin')),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
   token CHAR(64) PRIMARY KEY,
-  user_id INT NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS coupons (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   date DATE NOT NULL,
-  status ENUM('Active', 'Inactive') NOT NULL,
-  source ENUM('Email', 'Slack', 'Zendesk', 'Basecamp') NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('Active', 'Inactive')),
+  source TEXT NOT NULL CHECK (source IN ('Email', 'Slack', 'Zendesk', 'Basecamp')),
   source_ref VARCHAR(255) NULL,
   sender VARCHAR(255) NOT NULL,
-  type ENUM('Discount', 'Hot Deals') NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('LOKE Discount', 'Hot Deals')),
   promo_title VARCHAR(255) NOT NULL,
   code VARCHAR(100) NOT NULL,
   promo_link VARCHAR(500) NULL,
-  redemption_type ENUM('Multi', 'Single') NOT NULL,
+  redemption_type TEXT NOT NULL CHECK (redemption_type IN ('Multi', 'Single')),
   start_date DATE NULL,
   end_date DATE NULL,
   participating_stores TEXT NULL,
-  agent_handling ENUM('Mark', 'Noli') NOT NULL,
+  agent_handling TEXT NOT NULL CHECK (agent_handling IN ('Mark', 'Noli')),
   agent_sign_off VARCHAR(255) NULL,
   start_of_day_check DATE NULL,
-  calendar_invite_created BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_coupons_status (status),
-  INDEX idx_coupons_created_at (created_at)
+  calendar_invite_created DATE NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_coupons_status ON coupons (status);
+CREATE INDEX IF NOT EXISTS idx_coupons_created_at ON coupons (created_at);
 
 -- Quarterly Hot Deals: each CSV import creates one named batch (e.g. "Q3 Hot
 -- Deals"). Deal columns vary quarter to quarter, so they're stored as rows
 -- rather than fixed columns; per-store band values live in a JSON blob since
 -- which deals apply also varies per batch.
 CREATE TABLE IF NOT EXISTS hot_deals_batches (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS hot_deals_deals (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  batch_id INT NOT NULL,
-  position INT NOT NULL,
-  kind ENUM('flat', 'band') NOT NULL,
+  id SERIAL PRIMARY KEY,
+  batch_id INTEGER NOT NULL REFERENCES hot_deals_batches(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('flat', 'band')),
   name VARCHAR(255) NOT NULL,
-  code VARCHAR(100) NOT NULL,
-  FOREIGN KEY (batch_id) REFERENCES hot_deals_batches(id) ON DELETE CASCADE,
-  INDEX idx_hot_deals_deals_batch (batch_id)
+  code VARCHAR(100) NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_hot_deals_deals_batch ON hot_deals_deals (batch_id);
 
 CREATE TABLE IF NOT EXISTS hot_deals_store_rows (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  batch_id INT NOT NULL,
+  id SERIAL PRIMARY KEY,
+  batch_id INTEGER NOT NULL REFERENCES hot_deals_batches(id) ON DELETE CASCADE,
   store_id VARCHAR(50) NOT NULL,
   expiration_date DATE NULL,
-  band_values JSON NULL,
-  FOREIGN KEY (batch_id) REFERENCES hot_deals_batches(id) ON DELETE CASCADE,
-  INDEX idx_hot_deals_store_rows_batch (batch_id)
+  band_values JSONB NULL
 );
+CREATE INDEX IF NOT EXISTS idx_hot_deals_store_rows_batch ON hot_deals_store_rows (batch_id);
 
 -- Manually-added dashboard reminders (separate from the auto-generated
--- sign-off/checklist/activation reminders, which are derived from coupons
--- on the fly and never stored).
+-- sign-off/checklist reminders, which are derived from coupons on the fly
+-- and never stored).
 CREATE TABLE IF NOT EXISTS manual_reminders (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   text VARCHAR(255) NOT NULL,
   due_date DATE NULL,
-  created_by INT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  created_by INTEGER NULL REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- One-time bootstrap: after you sign up through the app once (so a users row
@@ -96,3 +87,20 @@ CREATE TABLE IF NOT EXISTS manual_reminders (
 -- else from the Settings page:
 --
 -- UPDATE users SET status = 'approved', role = 'admin' WHERE email = 'you@loke.com';
+
+-- Migration: if your coupons table already exists with calendar_invite_created
+-- as a BOOLEAN, run this once to switch it to a DATE (existing true/false
+-- values are dropped since there's no date to recover them from):
+--
+-- ALTER TABLE coupons
+--   ALTER COLUMN calendar_invite_created DROP DEFAULT,
+--   ALTER COLUMN calendar_invite_created DROP NOT NULL,
+--   ALTER COLUMN calendar_invite_created TYPE DATE USING NULL;
+
+-- Migration: "Discount" was renamed to "LOKE Discount". Run this once against
+-- an existing database to relabel existing rows and update the constraint
+-- (check \d coupons in the SQL Editor if the constraint name differs):
+--
+-- UPDATE coupons SET type = 'LOKE Discount' WHERE type = 'Discount';
+-- ALTER TABLE coupons DROP CONSTRAINT coupons_type_check;
+-- ALTER TABLE coupons ADD CONSTRAINT coupons_type_check CHECK (type IN ('LOKE Discount', 'Hot Deals'));

@@ -40,7 +40,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       body.agentHandling,
       body.agentSignOff || null,
       body.startOfDayCheck || null,
-      Boolean(body.calendarInviteCreated),
+      body.calendarInviteCreated || null,
       id,
     ]
   );

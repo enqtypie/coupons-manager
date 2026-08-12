@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { query } from "@/app/lib/db";
 import { requireApprovedUser, authErrorResponse } from "@/app/lib/auth-server";
 import { rowToRecord, type CouponRow, type CouponRecord } from "@/app/lib/types";
-import { formatDate } from "@/app/lib/date";
+import { formatDate, formatEndDate } from "@/app/lib/date";
 
 type DateField = "request" | "activation";
 
@@ -18,12 +18,12 @@ const CSV_COLUMNS: { header: string; get: (c: CouponRecord) => string }[] = [
   { header: "Promo Link", get: (c) => c.promoLink },
   { header: "Redemption Type", get: (c) => c.redemptionType },
   { header: "Start Date", get: (c) => formatDate(c.startDate) },
-  { header: "End Date", get: (c) => formatDate(c.endDate) },
+  { header: "End Date", get: (c) => formatEndDate(c.endDate) },
   { header: "Participating Stores", get: (c) => c.participatingStores },
   { header: "Agent Handling", get: (c) => c.agentHandling },
   { header: "Agent Sign Off", get: (c) => c.agentSignOff },
   { header: "Start of Day Check", get: (c) => formatDate(c.startOfDayCheck) },
-  { header: "Calendar Invite Created", get: (c) => (c.calendarInviteCreated ? "Yes" : "No") },
+  { header: "Calendar Invite Created", get: (c) => formatDate(c.calendarInviteCreated) },
 ];
 
 function csvEscape(value: string): string {

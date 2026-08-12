@@ -24,13 +24,8 @@ export default function EditCouponModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) {
     if (!form) return;
-    const { name, value, type } = e.target;
-    if (type === "checkbox") {
-      const checked = (e.target as HTMLInputElement).checked;
-      setForm({ ...form, [name]: checked });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -69,7 +64,7 @@ export default function EditCouponModal({
           </label>
           <label>Type
             <select name="type" value={form.type ?? ""} onChange={handleChange} required>
-              <option value="Discount">Discount</option>
+              <option value="LOKE Discount">LOKE Discount</option>
               <option value="Hot Deals">Hot Deals</option>
             </select>
           </label>
@@ -91,7 +86,7 @@ export default function EditCouponModal({
           <label>Start Date
             <input type="date" name="startDate" value={form.startDate ?? ""} onChange={handleChange} />
           </label>
-          <label>End Date
+          <label>End Date (leave blank for no expiry)
             <input type="date" name="endDate" value={form.endDate ?? ""} onChange={handleChange} />
           </label>
           <label>Participating Stores
@@ -109,9 +104,8 @@ export default function EditCouponModal({
           <label>Start of Day Check
             <input type="date" name="startOfDayCheck" value={form.startOfDayCheck ?? ""} onChange={handleChange} />
           </label>
-          <label className="checkbox-label">
-            <input type="checkbox" name="calendarInviteCreated" checked={form.calendarInviteCreated ?? false} onChange={handleChange} />
-            Calendar Invite Created
+          <label>Calendar Invite Created
+            <input type="date" name="calendarInviteCreated" value={form.calendarInviteCreated ?? ""} onChange={handleChange} />
           </label>
           <div className="form-actions">
             <button type="button" className="row-action" onClick={onClose}>Cancel</button>

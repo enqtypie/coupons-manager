@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   }
 
   const result = await execute(
-    "INSERT INTO manual_reminders (text, due_date, created_by) VALUES (?, ?, ?)",
+    "INSERT INTO manual_reminders (text, due_date, created_by) VALUES (?, ?, ?) RETURNING id",
     [text, dueDate, user.id]
   );
 

@@ -28,7 +28,7 @@ export interface NotifItem {
 
 export type CouponStatus = "Active" | "Inactive";
 export type CouponSource = "Email" | "Slack" | "Zendesk" | "Basecamp";
-export type CouponType = "Discount" | "Hot Deals";
+export type CouponType = "LOKE Discount" | "Hot Deals";
 export type RedemptionType = "Multi" | "Single";
 export type AgentHandling = "Mark" | "Noli";
 
@@ -50,7 +50,7 @@ export type CouponRecord = {
   agentHandling: AgentHandling;
   agentSignOff: string;
   startOfDayCheck: string;
-  calendarInviteCreated: boolean;
+  calendarInviteCreated: string;
 };
 
 export type CouponRow = {
@@ -71,8 +71,7 @@ export type CouponRow = {
   agent_handling: AgentHandling;
   agent_sign_off: string | null;
   start_of_day_check: string | null;
-  // mysql2 returns TINYINT(1) columns as 0/1, not a real boolean.
-  calendar_invite_created: number | boolean;
+  calendar_invite_created: string | null;
 };
 
 export function rowToRecord(row: CouponRow): CouponRecord {
@@ -94,6 +93,6 @@ export function rowToRecord(row: CouponRow): CouponRecord {
     agentHandling: row.agent_handling,
     agentSignOff: row.agent_sign_off ?? "",
     startOfDayCheck: row.start_of_day_check ?? "",
-    calendarInviteCreated: Boolean(row.calendar_invite_created),
+    calendarInviteCreated: row.calendar_invite_created ?? "",
   };
 }

@@ -85,7 +85,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  const batchResult = await execute("INSERT INTO hot_deals_batches (name) VALUES (?)", [name]);
+  const batchResult = await execute(
+    "INSERT INTO hot_deals_batches (name) VALUES (?) RETURNING id",
+    [name]
+  );
   const batchId = batchResult.insertId;
 
   for (const deal of parsed.flatDeals) {
@@ -98,7 +101,7 @@ export async function POST(request: Request) {
   const bandDealIds: number[] = [];
   for (const deal of parsed.bandDeals) {
     const result = await execute(
-      "INSERT INTO hot_deals_deals (batch_id, position, kind, name, code) VALUES (?, ?, 'band', ?, ?)",
+      "INSERT INTO hot_deals_deals (batch_id, position, kind, name, code) VALUES (?, ?, 'band', ?, ?) RETURNING id",
       [batchId, deal.position, deal.name, deal.code]
     );
     bandDealIds.push(result.insertId);

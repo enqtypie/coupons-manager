@@ -79,7 +79,8 @@ export async function POST(request: Request) {
       (date, status, source, source_ref, sender, type, promo_title, code, promo_link,
        redemption_type, start_date, end_date, participating_stores, agent_handling,
        agent_sign_off, start_of_day_check, calendar_invite_created)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     RETURNING id`,
     [
       body.date,
       body.status,
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
       body.agentHandling,
       body.agentSignOff || null,
       body.startOfDayCheck || null,
-      Boolean(body.calendarInviteCreated),
+      body.calendarInviteCreated || null,
     ]
   );
 
