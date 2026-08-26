@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { query, execute } from "@/app/lib/db";
 import { sendPush, type PushSubscriptionRow, type PushPayload } from "@/app/lib/push";
 
+// This route reads the Authorization header off the raw Request object
+// (not next/headers' cookies()/headers()), which doesn't count as one of the
+// signals Next.js uses to opt a GET route handler into per-request dynamic
+// execution — without this, it can get statically cached at build time and
+// keep serving that same frozen response to every request afterward.
+export const dynamic = "force-dynamic";
+
 type CouponHit = { id: number; code: string; promo_title: string };
 type NotificationKind = "activation_soon" | "activation" | "deactivation_soon" | "deactivation";
 
