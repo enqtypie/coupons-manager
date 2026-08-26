@@ -1,8 +1,37 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  /* Spacing scale — everything below pulls from these, nothing hardcoded loose */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+
+  /* Radius scale */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  /* Shared colors */
+  --color-border: rgba(0, 0, 0, 0.10);
+  --color-divider: rgba(0, 0, 0, 0.07);
+  --color-text: #111;
+  --color-text-muted: #888;
+  --color-text-faint: #6b7280;
+  --color-accent: #185FA5;
+  --color-accent-soft: rgba(24, 95, 165, 0.06);
+  --color-urgent: #dc2626;
+  --color-bg: #f3f2ef;
+  --color-surface: #ffffff;
+}
+
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  background: #f3f2ef;
+  background: var(--color-bg);
   min-height: 100vh;
 }
 
@@ -13,36 +42,52 @@ body {
   min-height: 100vh;
 }
 
-
 /* Main */
 .main {
   flex: 1;
-  padding: 28px;
+  padding: var(--space-7);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
   overflow-y: auto;
 }
 
 /* Notification cards */
-.notif-row {
+.dashboard-top {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--space-3);
+  align-items: start;
+}
+.dashboard-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 .notif-card {
-  background: #ffffff;
-  border: 0.5px solid rgba(0,0,0,0.10);
-  border-radius: 12px;
-  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
+/* Upcoming Events is the only card on the left, so pin it to the same
+   height as the Reminders + stat-cards column on the right (that column
+   is left on its natural auto height). Tune this one number if the
+   Reminders/stats content grows or shrinks and the two drift apart again. */
+.dashboard-top > .notif-card {
+  height: 620px;
+}
+
 .notif-label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   font-size: 11px;
   font-weight: 500;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -52,7 +97,7 @@ body {
   justify-content: space-between;
 }
 .notif-card-header .notif-label {
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
 }
 .notif-add-btn {
   background: none;
@@ -61,55 +106,55 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 2px;
-  margin-bottom: 8px;
+  padding: var(--space-1);
+  margin-bottom: var(--space-2);
   transition: color 0.15s;
 }
 .notif-add-btn:hover {
-  color: #185FA5;
+  color: var(--color-accent);
 }
 .notif-add-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  margin-bottom: 8px;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
   background: rgba(0, 0, 0, 0.03);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 .notif-add-form input[type="text"] {
   border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 6px;
-  padding: 7px 9px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) 9px;
   font-size: 12px;
-  color: #111;
-  background: #fff;
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 .notif-add-form input[type="text"]::placeholder {
-  color: #6b7280;
+  color: var(--color-text-faint);
 }
 .notif-add-form-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .notif-add-form-row input[type="date"] {
   flex: 1;
   border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 6px;
-  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  padding: 6px var(--space-2);
   font-size: 12px;
-  color: #111;
-  background: #fff;
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 .notif-add-form-row .row-action {
   color: #4e4e4e;
 }
 .notif-add-form-row .row-action:hover {
-  color: #111;
+  color: var(--color-text);
 }
 .notif-add-form-row .btn-primary {
-  color: #111;
+  color: var(--color-text);
 }
 .notif-add-form-row .btn-primary:disabled {
   color: #9ca3af;
@@ -119,22 +164,85 @@ body {
 .notif-empty {
   font-size: 12px;
   color: #434547;
-  padding: 4px 0;
+  padding: var(--space-1) 0;
+}
+.notif-undo-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 0.5px solid var(--color-divider);
+}
+.notif-undo-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-2);
+}
+.notif-undo-text {
+  font-size: 11px;
+  color: var(--color-text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notif-undo-btn {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 2px var(--space-1);
+}
+.notif-undo-btn:hover {
+  text-decoration: underline;
 }
 .notif-list {
-  max-height: 215px;
+  max-height: 216px; /* 8 rows at ~27px, keeps the fixed-height cap on an even multiple */
   overflow-y: auto;
+  overflow-x: hidden;
+}
+/* .dashboard-top now stretches both columns to equal height (see above),
+   so instead of guessing a taller fixed max-height here, this list just
+   grows to fill whatever space is left in the stretched card and scrolls
+   internally if there's more content than fits. Stays correct no matter
+   which column ends up taller. */
+.notif-list--calendar {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
 }
 .notif-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 5px 0;
-  border-bottom: 0.5px solid rgba(0,0,0,0.07);
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 0.5px solid var(--color-divider);
+}
+.notif-item--clickable {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  margin: 0 -6px;
+  padding: var(--space-2) 6px;
+  transition: background 0.15s;
+}
+.notif-item--clickable:hover,
+.notif-item--clickable:focus-visible {
+  background: var(--color-accent-soft);
+}
+.notif-item--clickable:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
 }
 .notif-item--urgent .notif-text,
 .notif-item--urgent .notif-sub {
-  color: #dc2626;
+  color: var(--color-urgent);
   font-weight: 500;
 }
 .notif-remove-btn {
@@ -144,7 +252,7 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 2px;
+  padding: var(--space-1);
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -158,13 +266,13 @@ body {
 .notif-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   margin-top: 5px;
   flex-shrink: 0;
 }
 .notif-text {
   font-size: 12px;
-  color: #111;
+  color: var(--color-text);
   line-height: 1.5;
   display: flex;
   flex-direction: column;
@@ -172,21 +280,136 @@ body {
   min-width: 0;
 }
 .notif-sub {
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 11px;
+}
+
+/* Mini calendar */
+.mini-calendar {
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 0.5px solid var(--color-border);
+}
+.mini-calendar-today {
+  font-size: 11px;
+  color: var(--color-text-faint);
+  margin-bottom: var(--space-2);
+}
+.mini-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+.mini-calendar-header button {
+  background: none;
+  border: none;
+  color: var(--color-text-faint);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: var(--space-1);
+}
+.mini-calendar-header button:hover {
+  color: var(--color-accent);
+}
+.mini-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+.mini-calendar-weekday {
+  font-size: 10px;
+  color: #9ca3af;
+  padding: 2px 0;
+}
+.mini-calendar-day {
+  font-size: 11px;
+  color: #374151;
+  padding: var(--space-1) 0;
+  border-radius: var(--radius-sm);
+  position: relative;
+  /* Fixed height instead of letting padding + text set it — an empty
+     placeholder cell (used to pad short months to a full 6-row grid) has
+     no text content, so without this it collapses shorter than a cell
+     with a real digit in it. That's what was making the card shrink on
+     months like February that need extra blank rows. */
+  height: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mini-calendar-day--today {
+  background: var(--color-accent);
+  color: var(--color-surface);
+  font-weight: 600;
+}
+.mini-calendar-day--marked:not(.mini-calendar-day--today)::after {
+  content: "";
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: #378ADD;
+}
+.mini-calendar-day--marked {
+  cursor: default;
+}
+.mini-calendar-day--empty {
+  visibility: hidden;
+}
+.mini-calendar-tooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  width: max-content;
+  max-width: 140px;
+  z-index: 5;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.mini-calendar-tooltip-line {
+  display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.mini-calendar-tooltip-line + .mini-calendar-tooltip-line {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.15);
+}
+.mini-calendar-day--marked:hover .mini-calendar-tooltip {
+  display: block;
 }
 
 /* Stat cards */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
 }
 .stat-card {
-  background: #ffffff;
-  border: 0.5px solid rgba(0,0,0,0.10);
-  border-radius: 12px;
-  padding: 16px;
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
   position: relative;
   overflow: hidden;
 }
@@ -196,67 +419,67 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 .stat-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 .stat-label {
   font-size: 11px;
-  color: #888;
-  margin-bottom: 4px;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
 }
 .stat-value {
   font-size: 26px;
   font-weight: 500;
-  color: #111;
+  color: var(--color-text);
 }
 .stat-sub {
   font-size: 11px;
-  color: #888;
-  margin-top: 4px;
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
 }
 
 /* Chart */
 .chart-card {
-  background: #ffffff;
-  border: 0.5px solid rgba(0,0,0,0.10);
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
   flex: 1;
 }
 .chart-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .chart-title {
   font-size: 14px;
   font-weight: 500;
-  color: #111;
+  color: var(--color-text);
 }
 .chart-sub {
   font-size: 12px;
-  color: #888;
-  margin-bottom: 16px;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
 }
 .chart-legend {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
 }
 .legend-item {
   display: flex;
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  color: #888;
+  color: var(--color-text-muted);
 }
 .legend-dot {
   width: 8px;
@@ -269,14 +492,66 @@ body {
   width: 100%;
   height: 220px;
 }
+.chart-filter {
+  display: flex;
+  gap: var(--space-1);
+}
+.chart-filter-btn {
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  font-size: 11px;
+  color: var(--color-text-faint);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.chart-filter-btn:hover {
+  border-color: rgba(0, 0, 0, 0.25);
+  color: var(--color-text);
+}
+.chart-filter-btn--active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-surface);
+}
+.chart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+  flex-wrap: wrap;
+}
+.chart-month-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+.chart-month-nav button {
+  background: none;
+  border: none;
+  color: var(--color-text-faint);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: var(--space-1);
+}
+.chart-month-nav button:hover {
+  color: var(--color-accent);
+}
 
 /* Responsive */
 @media (max-width: 900px) {
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-top { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .sidebar { display: none; }
-  .notif-row { grid-template-columns: 1fr; }
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
-  .main { padding: 16px; }
+  .stats-row { grid-template-columns: 1fr; }
+  .main { padding: var(--space-4); }
+  .chart-header { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+  .chart-legend { flex-wrap: wrap; }
 }

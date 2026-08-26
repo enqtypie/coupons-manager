@@ -24,6 +24,7 @@ export interface NotifItem {
   text: string;
   sub: string;
   urgent?: boolean;
+  coupon?: CouponRecord;
 }
 
 export type CouponStatus = "Active" | "Inactive";

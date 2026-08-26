@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/app/components/Sidebar";
 import AuthGuard from "@/app/components/AuthGuard";
+import NotificationSettings from "@/app/components/NotificationSettings";
 import { useAuth, getInitials, roleLabel, displayNameOrEmail, type Profile } from "@/app/lib/auth-context";
 import "../coupons-tracker/coupons-tracker.css";
 import "./settings.css";
@@ -155,6 +156,8 @@ function SettingsContent() {
             </button>
           </div>
         </section>
+
+        <NotificationSettings />
 
         {isAdmin && (
           <section className="settings-section">

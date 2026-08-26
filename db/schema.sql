@@ -82,6 +82,32 @@ CREATE TABLE IF NOT EXISTS manual_reminders (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- Push notifications: one row per subscribed browser/device (a user can have
+-- several — laptop, phone, etc). endpoint is the push service URL the
+-- browser gave us; p256dh/auth are the keys web-push needs to encrypt the
+-- payload for that specific subscription.
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL UNIQUE,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions (user_id);
+
+-- Tracks which activation/deactivation notifications have already gone out
+-- so the daily cron run never double-sends if it's ever triggered twice in
+-- one day.
+CREATE TABLE IF NOT EXISTS sent_coupon_notifications (
+  id SERIAL PRIMARY KEY,
+  coupon_id INTEGER NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('activation_soon', 'activation', 'deactivation_soon', 'deactivation')),
+  sent_date DATE NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE (coupon_id, kind, sent_date)
+);
+
 -- One-time bootstrap: after you sign up through the app once (so a users row
 -- exists), promote yourself to an approved admin so you can approve everyone
 -- else from the Settings page:

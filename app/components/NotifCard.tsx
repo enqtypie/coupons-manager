@@ -1,12 +1,15 @@
 "use client";
 
 import { CalendarDays, Bell } from "lucide-react";
-import type { NotifItem } from "@/app/lib/types";
+import type { CouponRecord, NotifItem } from "@/app/lib/types";
+import MiniCalendar from "./MiniCalendar";
 
 interface NotifCardProps {
   title: string;
   items: NotifItem[];
   variant: "blue" | "amber";
+  eventsByDate?: Map<string, string[]>;
+  onItemClick?: (coupon: CouponRecord) => void;
 }
 
 const COLORS = {
@@ -14,7 +17,7 @@ const COLORS = {
   amber: { label: "#854F0B", dot: "#EF9F27" },
 };
 
-export default function NotifCard({ title, items, variant }: NotifCardProps) {
+export default function NotifCard({ title, items, variant, eventsByDate, onItemClick }: NotifCardProps) {
   const c = COLORS[variant];
 
   return (
@@ -23,21 +26,38 @@ export default function NotifCard({ title, items, variant }: NotifCardProps) {
         {variant === "blue" ? <CalendarDays size={14} /> : <Bell size={14} />}
         {title}
       </div>
-      <div className="notif-list">
-        {items.map((item, i) => (
-          <div
-            key={i}
-            className={`notif-item${item.urgent ? " notif-item--urgent" : ""}${
-              i === items.length - 1 ? " notif-item--last" : ""
-            }`}
-          >
-            <span className="notif-dot" style={{ background: c.dot }} />
-            <span className="notif-text">
-              {item.text}
-              <span className="notif-sub">{item.sub}</span>
-            </span>
-          </div>
-        ))}
+      {eventsByDate && <MiniCalendar eventsByDate={eventsByDate} />}
+      <div className={`notif-list${eventsByDate ? " notif-list--calendar" : ""}`}>
+        {items.map((item, i) => {
+          const clickable = Boolean(onItemClick && item.coupon);
+          return (
+            <div
+              key={i}
+              className={`notif-item${item.urgent ? " notif-item--urgent" : ""}${
+                clickable ? " notif-item--clickable" : ""
+              }${i === items.length - 1 ? " notif-item--last" : ""}`}
+              role={clickable ? "button" : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              onClick={clickable ? () => onItemClick!(item.coupon!) : undefined}
+              onKeyDown={
+                clickable
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onItemClick!(item.coupon!);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              <span className="notif-dot" style={{ background: c.dot }} />
+              <span className="notif-text">
+                {item.text}
+                <span className="notif-sub">{item.sub}</span>
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

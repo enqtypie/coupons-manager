@@ -6,9 +6,11 @@ import NotifCard from "@/app/components/NotifCard";
 import RemindersCard, { type ReminderItem } from "@/app/components/RemindersCard";
 import StatCards from "@/app/components/StatCards";
 import RequestChart from "@/app/components/RequestChart";
+import ViewCouponModal from "@/app/components/ViewCouponModal";
 import type { CouponRecord } from "@/app/lib/types";
 import type { ManualReminder } from "@/app/lib/reminder-types";
 import { formatDate } from "@/app/lib/date";
+import "../coupons-tracker/coupons-tracker.css";
 import "./dashboard.css";
 import AuthGuard from "../components/AuthGuard";
 
@@ -25,6 +27,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
 
   const [manualReminders, setManualReminders] = useState<ManualReminder[]>([]);
+  const [viewCoupon, setViewCoupon] = useState<CouponRecord | null>(null);
 
   useEffect(() => {
     async function loadCoupons() {
@@ -103,7 +106,7 @@ function DashboardContent() {
   in60Days.setDate(in60Days.getDate() + 60);
   const in60DaysStr = in60Days.toISOString().slice(0, 10);
 
-  const upcoming = coupons
+  const upcomingEvents = coupons
     .flatMap((c) => {
       const events = [];
       if (c.startDate && c.startDate >= today && c.startDate <= in60DaysStr) {
@@ -112,6 +115,7 @@ function DashboardContent() {
           sub: formatDate(c.startDate),
           sortDate: c.startDate,
           urgent: c.startDate <= tomorrowStr,
+          coupon: c,
         });
       }
       if (c.endDate && c.endDate >= today && c.endDate <= in60DaysStr) {
@@ -120,19 +124,38 @@ function DashboardContent() {
           sub: formatDate(c.endDate),
           sortDate: c.endDate,
           urgent: c.endDate <= tomorrowStr,
+          coupon: c,
         });
       }
       return events;
     })
     .sort((a, b) => a.sortDate.localeCompare(b.sortDate))
-    .slice(0, 15)
-    .map(({ text, sub, urgent }) => ({ text, sub, urgent }));
+    .slice(0, 15);
+
+  const upcoming = upcomingEvents.map(({ text, sub, urgent, coupon }) => ({ text, sub, urgent, coupon }));
+
+  // The calendar marks every coupon activation/deactivation date — past and
+  // future — not just the ones in the Upcoming Events list below it.
+  const calendarEventsByDate = new Map<string, string[]>();
+  for (const c of coupons) {
+    if (c.startDate) {
+      const list = calendarEventsByDate.get(c.startDate) ?? [];
+      list.push(`${c.code} activation`);
+      calendarEventsByDate.set(c.startDate, list);
+    }
+    if (c.endDate) {
+      const list = calendarEventsByDate.get(c.endDate) ?? [];
+      list.push(`${c.code} deactivation`);
+      calendarEventsByDate.set(c.endDate, list);
+    }
+  }
 
 // Reminders: only for coupons that are still Active — an ended coupon's
 // sign-off/checklist is no longer anyone's problem.
 const signOffReminders = coupons
   .filter((c) => c.status === "Active" && !c.agentSignOff)
   .map((c) => ({
+    key: `signoff-${c.id}`,
     text: `${c.code} — agent sign-off required`,
     sub: c.promoTitle,
     urgent: Boolean(c.startDate && c.startDate <= tomorrowStr),
@@ -152,6 +175,7 @@ const checklistReminders = coupons
       if (!c.calendarInviteCreated) missing.push("calendar invite");
     }
     return {
+      key: `checklist-${c.id}`,
       text: `${c.code} — missing ${missing.join(", ")}`,
       sub: c.promoTitle,
       urgent: Boolean(c.startDate && c.startDate <= tomorrowStr),
@@ -163,6 +187,7 @@ const checklistReminders = coupons
 const autoReminders = [...signOffReminders, ...checklistReminders];
 
 const manualReminderItems: ReminderItem[] = manualReminders.map((r) => ({
+  key: `manual-${r.id}`,
   id: r.id,
   text: r.text,
   sub: r.dueDate ? `Due ${formatDate(r.dueDate)}` : "Manual reminder",
@@ -176,17 +201,27 @@ const reminders: ReminderItem[] = [...manualReminderItems, ...autoReminders].sli
     <div className="shell">
       <Sidebar />
       <main className="main">
-        <div className="notif-row">
-          <NotifCard title="Upcoming Events" items={upcoming} variant="blue" />
-          <RemindersCard
-            items={reminders}
-            onAdd={handleAddReminder}
-            onRemove={handleRemoveReminder}
+        <div className="dashboard-top">
+          <NotifCard
+            title="Upcoming Events"
+            items={upcoming}
+            variant="blue"
+            eventsByDate={calendarEventsByDate}
+            onItemClick={setViewCoupon}
           />
+          <div className="dashboard-right">
+            <RemindersCard
+              items={reminders}
+              onAdd={handleAddReminder}
+              onRemove={handleRemoveReminder}
+            />
+            {loading ? <p>Loading stats...</p> : <StatCards counts={counts} />}
+          </div>
         </div>
-        {loading ? <p>Loading stats...</p> : <StatCards counts={counts} />}
         <RequestChart />
       </main>
+
+      <ViewCouponModal coupon={viewCoupon} onClose={() => setViewCoupon(null)} />
     </div>
   );
 }
