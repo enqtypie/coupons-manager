@@ -36,7 +36,23 @@ function isAuthorized(request: Request): boolean {
 // per day, even if this ever runs twice.
 export async function GET(request: Request) {
   if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // TEMPORARY DEBUG — never reveals the actual secret, only whether Vercel
+    // sees it and how the two lengths compare. Remove once CRON_SECRET is
+    // confirmed working.
+    const secret = process.env.CRON_SECRET;
+    const authHeader = request.headers.get("authorization");
+    return NextResponse.json(
+      {
+        error: "Unauthorized",
+        debug: {
+          envVarPresent: Boolean(secret),
+          envVarLength: secret?.length ?? 0,
+          receivedHeader: Boolean(authHeader),
+          receivedHeaderLength: authHeader?.length ?? 0,
+        },
+      },
+      { status: 401 }
+    );
   }
 
   const today = new Date().toISOString().slice(0, 10);
