@@ -19,7 +19,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3";
 
-type CouponHit = { id: number; code: string; promo_title: string };
+type CouponHit = { id: string; code: string; promo_title: string }; // id is a uuid
 type NotificationKind = "activation_soon" | "activation" | "deactivation_soon" | "deactivation";
 
 type PushSubscriptionRow = {
