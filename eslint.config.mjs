@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Deno Edge Function code — different runtime/globals (Deno.*, npm:
+    // specifiers), not part of the Next.js TypeScript project.
+    "supabase/**",
   ]),
 ]);
 

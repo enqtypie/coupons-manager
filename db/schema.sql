@@ -130,3 +130,31 @@ CREATE TABLE IF NOT EXISTS sent_coupon_notifications (
 -- UPDATE coupons SET type = 'LOKE Discount' WHERE type = 'Discount';
 -- ALTER TABLE coupons DROP CONSTRAINT coupons_type_check;
 -- ALTER TABLE coupons ADD CONSTRAINT coupons_type_check CHECK (type IN ('LOKE Discount', 'Hot Deals'));
+
+-- Schedules the notify-coupons Edge Function to run daily. Run this ONCE,
+-- AFTER deploying the function (`supabase functions deploy notify-coupons
+-- --no-verify-jwt`) — replace <CRON_SECRET> below with the same value you
+-- set via `supabase secrets set CRON_SECRET=...`. Adjust the '0 13 * * *'
+-- schedule (UTC) if 13:00 UTC (~8-9am US Eastern) isn't the right time for
+-- your team.
+--
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- CREATE EXTENSION IF NOT EXISTS pg_net;
+--
+-- SELECT cron.schedule(
+--   'notify-coupons-daily',
+--   '0 13 * * *',
+--   $$
+--   SELECT net.http_post(
+--     url := 'https://owcbibukjljezdyqvnyi.supabase.co/functions/v1/notify-coupons',
+--     headers := jsonb_build_object(
+--       'Authorization', 'Bearer <CRON_SECRET>',
+--       'Content-Type', 'application/json'
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
+--
+-- To check it's registered: SELECT * FROM cron.job;
+-- To remove it later:       SELECT cron.unschedule('notify-coupons-daily');
