@@ -19,7 +19,11 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE TABLE IF NOT EXISTS coupons (
-  id SERIAL PRIMARY KEY,
+  -- UUID, not SERIAL — matches the table as it actually exists in production
+  -- (left over from the very first Supabase integration, before this file's
+  -- other tables existed). Kept this way rather than converting so existing
+  -- data and every other table's assumptions stay correct.
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   date DATE NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('Active', 'Inactive')),
   source TEXT NOT NULL CHECK (source IN ('Email', 'Slack', 'Zendesk', 'Basecamp')),
@@ -101,7 +105,7 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions (us
 -- one day.
 CREATE TABLE IF NOT EXISTS sent_coupon_notifications (
   id SERIAL PRIMARY KEY,
-  coupon_id INTEGER NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+  coupon_id UUID NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
   kind TEXT NOT NULL CHECK (kind IN ('activation_soon', 'activation', 'deactivation_soon', 'deactivation')),
   sent_date DATE NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
