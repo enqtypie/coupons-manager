@@ -75,6 +75,17 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+  try {
+    return await run(supabase);
+  } catch (e) {
+    console.error("notify-coupons failed:", e);
+    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
+
+async function run(
+  supabase: ReturnType<typeof createClient>
+): Promise<Response> {
   const today = new Date().toISOString().slice(0, 10);
   const tomorrowDate = new Date();
   tomorrowDate.setDate(tomorrowDate.getDate() + 1);
@@ -167,4 +178,4 @@ Deno.serve(async (req) => {
     sent: sentCount,
     expiredRemoved: expiredIds.length,
   });
-});
+}
