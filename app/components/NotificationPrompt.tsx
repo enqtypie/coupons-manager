@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, X } from "lucide-react";
-import { isPushSupported, subscribeToPush } from "@/app/lib/push-client";
-
-const DISMISS_KEY = "notificationPromptDismissed";
+import { isPushSupported, getExistingSubscription, subscribeToPush } from "@/app/lib/push-client";
 
 export default function NotificationPrompt() {
   const [visible, setVisible] = useState(false);
@@ -12,23 +10,19 @@ export default function NotificationPrompt() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!isPushSupported() || Notification.permission !== "default") return;
-    try {
-      if (localStorage.getItem(DISMISS_KEY) === "true") return;
-    } catch {
-      // ignore — localStorage may be unavailable
+    async function check() {
+      // Browser-level permission can't be re-asked once denied — no point
+      // showing this if it'll just fail immediately.
+      if (!isPushSupported() || Notification.permission === "denied") return;
+      // Deliberately no "dismissed forever" flag: this shows every time
+      // there's no actual working subscription yet, not just once. A
+      // dismiss only hides it for the current page — it comes back on the
+      // next login/navigation until subscribing actually succeeds.
+      const sub = await getExistingSubscription();
+      if (!sub) setVisible(true);
     }
-    setVisible(true);
+    check();
   }, []);
-
-  function dismiss() {
-    setVisible(false);
-    try {
-      localStorage.setItem(DISMISS_KEY, "true");
-    } catch {
-      // ignore — localStorage may be unavailable
-    }
-  }
 
   async function handleEnable() {
     setBusy(true);
@@ -58,7 +52,7 @@ export default function NotificationPrompt() {
         <button type="button" className="btn-primary" onClick={handleEnable} disabled={busy}>
           {busy ? "Enabling..." : "Enable"}
         </button>
-        <button type="button" className="notif-prompt-dismiss" onClick={dismiss} aria-label="Dismiss">
+        <button type="button" className="notif-prompt-dismiss" onClick={() => setVisible(false)} aria-label="Dismiss">
           <X size={14} />
         </button>
       </div>
