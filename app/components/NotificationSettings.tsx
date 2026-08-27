@@ -69,11 +69,19 @@ export default function NotificationSettings() {
         applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
       });
 
-      await fetch("/api/push/subscribe", {
+      const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sub.toJSON()),
       });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? `Couldn't save the subscription (server said ${res.status}).`);
+        await sub.unsubscribe();
+        setBusy(false);
+        return;
+      }
 
       setStatus("subscribed");
     } catch {
