@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/lib/auth-context";
+import NotificationPrompt from "./NotificationPrompt";
 
 export default function AuthGuard({
   children,
@@ -33,5 +34,10 @@ export default function AuthGuard({
     return <p style={{ padding: 24 }}>Loading...</p>;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <NotificationPrompt />
+      {children}
+    </>
+  );
 }

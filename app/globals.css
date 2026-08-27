@@ -31,6 +31,56 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Post-login notification permission prompt */
+.notif-prompt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #E6F1FB;
+  border-bottom: 1px solid rgba(24, 95, 165, 0.2);
+  padding: 12px 20px;
+}
+.notif-prompt-icon {
+  color: #185FA5;
+  flex-shrink: 0;
+}
+.notif-prompt-body {
+  flex: 1;
+  min-width: 0;
+}
+.notif-prompt-text {
+  font-size: 13px;
+  color: #111;
+}
+.notif-prompt-error {
+  font-size: 12px;
+  color: #A32D2D;
+  margin-top: 2px;
+}
+.notif-prompt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.notif-prompt-dismiss {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+.notif-prompt-dismiss:hover {
+  color: #111;
+}
+@media (max-width: 640px) {
+  .notif-prompt {
+    flex-wrap: wrap;
+  }
+}
+
 /* Sidebar */
 .sidebar {
   width: 220px;

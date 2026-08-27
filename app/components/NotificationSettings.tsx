@@ -1,19 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isPushSupported, getExistingSubscription, subscribeToPush, unsubscribeFromPush } from "@/app/lib/push-client";
 
 type Status = "checking" | "unsupported" | "denied" | "subscribed" | "unsubscribed";
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; i++) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
 
 export default function NotificationSettings() {
   const [status, setStatus] = useState<Status>("checking");
@@ -22,7 +12,7 @@ export default function NotificationSettings() {
 
   useEffect(() => {
     async function check() {
-      if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      if (!isPushSupported()) {
         setStatus("unsupported");
         return;
       }
@@ -31,8 +21,7 @@ export default function NotificationSettings() {
         return;
       }
       try {
-        const registration = await navigator.serviceWorker.register("/sw.js");
-        const sub = await registration.pushManager.getSubscription();
+        const sub = await getExistingSubscription();
         setStatus(sub ? "subscribed" : "unsubscribed");
       } catch {
         setStatus("unsupported");
@@ -44,48 +33,12 @@ export default function NotificationSettings() {
   async function handleEnable() {
     setBusy(true);
     setError("");
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setStatus("denied");
-        setBusy(false);
-        return;
-      }
-
-      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!publicKey) {
-        setError("Push notifications aren't configured yet.");
-        setBusy(false);
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.ready;
-      const sub = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        // TS's DOM lib wants a concrete ArrayBuffer-backed BufferSource;
-        // Uint8Array's generic buffer type (which could be a
-        // SharedArrayBuffer) doesn't structurally match even though this one
-        // is always a plain ArrayBuffer at runtime.
-        applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
-      });
-
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sub.toJSON()),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(data?.error ?? `Couldn't save the subscription (server said ${res.status}).`);
-        await sub.unsubscribe();
-        setBusy(false);
-        return;
-      }
-
+    const result = await subscribeToPush();
+    if (result.ok) {
       setStatus("subscribed");
-    } catch {
-      setError("Couldn't enable notifications. Try again.");
+    } else {
+      setError(result.error);
+      if (result.permissionDenied) setStatus("denied");
     }
     setBusy(false);
   }
@@ -93,20 +46,11 @@ export default function NotificationSettings() {
   async function handleDisable() {
     setBusy(true);
     setError("");
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      const sub = await registration.pushManager.getSubscription();
-      if (sub) {
-        await fetch("/api/push/unsubscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: sub.endpoint }),
-        });
-        await sub.unsubscribe();
-      }
+    const result = await unsubscribeFromPush();
+    if (result.ok) {
       setStatus("unsubscribed");
-    } catch {
-      setError("Couldn't disable notifications. Try again.");
+    } else {
+      setError(result.error);
     }
     setBusy(false);
   }
