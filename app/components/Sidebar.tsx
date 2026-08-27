@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { NAV } from "@/app/lib/data";
 import { useAuth, getInitials, roleLabel, displayNameOrEmail } from "@/app/lib/auth-context";
 
@@ -15,6 +15,7 @@ export default function Sidebar() {
   const { user, profile, refreshProfile } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(STORAGE_KEY) === "true");
@@ -25,6 +26,22 @@ export default function Sidebar() {
     if (hydrated) localStorage.setItem(STORAGE_KEY, String(collapsed));
   }, [collapsed, hydrated]);
 
+  // Close the mobile drawer whenever the route changes (e.g. after tapping a nav link).
+  useEffect(() => {
+    async function close() {
+      setMobileOpen(false);
+    }
+    close();
+  }, [pathname]);
+
+  // Lock page scroll behind the drawer while it's open on mobile.
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     await refreshProfile();
@@ -32,12 +49,28 @@ export default function Sidebar() {
   }
 
   const nameForDisplay = displayNameOrEmail(profile, user?.email);
+  // The mobile drawer always shows full labels, regardless of the desktop
+  // collapse preference — collapsing only makes sense for the persistent
+  // side rail, not a temporary overlay.
+  const showCollapsed = collapsed && !mobileOpen;
 
   return (
-    <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
+    <>
+      <button
+        type="button"
+        className="mobile-menu-btn"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
+      {mobileOpen && <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
+      <aside
+        className={`sidebar${showCollapsed ? " sidebar--collapsed" : ""}${mobileOpen ? " sidebar--mobile-open" : ""}`}
+      >
       <div className="sidebar-header">
         <div className="sidebar-header-top">
-          {!collapsed && <h1 className="sidebar-title">Coupons Manager</h1>}
+          {!showCollapsed && <h1 className="sidebar-title">Coupons Manager</h1>}
           <button
             type="button"
             className="sidebar-toggle"
@@ -47,13 +80,21 @@ export default function Sidebar() {
           >
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
+          <button
+            type="button"
+            className="mobile-close-btn"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
         </div>
-        {!collapsed && <p className="sidebar-subtitle">Jet&apos;s Pizza — US Operations</p>}
+        {!showCollapsed && <p className="sidebar-subtitle">Jet&apos;s Pizza — US Operations</p>}
         <div className="avatar-row">
           <div className="avatar" title={user?.email ?? undefined}>
             {getInitials(nameForDisplay)}
           </div>
-          {!collapsed && (
+          {!showCollapsed && (
             <div className="avatar-info">
               <p className="avatar-name" title={user?.email ?? undefined}>
                 {nameForDisplay}
@@ -67,7 +108,7 @@ export default function Sidebar() {
       <nav className="nav">
         {NAV.map((group) => (
           <div key={group.section}>
-            {!collapsed && <p className="nav-section">{group.section}</p>}
+            {!showCollapsed && <p className="nav-section">{group.section}</p>}
             {group.items.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -75,10 +116,10 @@ export default function Sidebar() {
                   key={item.label}
                   href={item.href}
                   className={`nav-item${isActive ? " nav-item--active" : ""}`}
-                  title={collapsed ? item.label : undefined}
+                  title={showCollapsed ? item.label : undefined}
                 >
                   <span className="nav-item-icon">{item.icon}</span>
-                  {!collapsed && item.label}
+                  {!showCollapsed && item.label}
                 </Link>
               );
             })}
@@ -87,11 +128,12 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout} title={collapsed ? "Logout" : undefined}>
+        <button className="logout-btn" onClick={handleLogout} title={showCollapsed ? "Logout" : undefined}>
           <LogOut size={16} />
-          {!collapsed && "Logout"}
+          {!showCollapsed && "Logout"}
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
