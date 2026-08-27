@@ -284,78 +284,200 @@ body {
 }
 
 /* Mobile sidebar drawer */
-.mobile-menu-btn,
+.mobile-topbar,
 .mobile-close-btn,
 .sidebar-backdrop {
   display: none;
 }
 
 @media (max-width: 768px) {
+  /* Fixed header bar replacing the desktop sidebar on small screens — always
+     visible so the menu control is never scrolled out of reach. Elevation
+     comes from a soft shadow rather than a hard border, and top padding
+     respects the iOS/Android status-bar safe area on notched devices. */
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    min-height: 60px;
+    padding: 10px 16px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    background: #ffffff;
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+    z-index: 105;
+    box-sizing: border-box;
+  }
+  .mobile-topbar-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  /* Small brand mark, same visual language as the desktop sidebar's avatar
+     circle — gives the mobile bar a bit of identity instead of bare text. */
+  .mobile-topbar-text::before {
+    content: "C";
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #E6F1FB;
+    color: #185FA5;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-topbar-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: #111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mobile-topbar-welcome {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .mobile-menu-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
     border: none;
-    border-radius: 8px;
-    background: #ffffff;
+    border-radius: 10px;
+    background: transparent;
     color: #111;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
     cursor: pointer;
-    z-index: 110;
+    transition: background 0.15s;
+  }
+  .mobile-menu-btn:hover {
+    background: #f5f5f5;
+  }
+  .mobile-menu-btn:active {
+    background: #ebebeb;
+  }
+  /* Hamburger <-> X morph: a quick rotate on the icon itself makes the
+     single button read as a toggle rather than two unrelated icons. */
+  .menu-icon {
+    display: flex;
+    transition: transform 0.2s ease;
+  }
+  .menu-icon--open {
+    transform: rotate(90deg);
   }
 
   .sidebar-backdrop {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(17, 17, 17, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     z-index: 99;
+    animation: sidebar-backdrop-in 0.2s ease;
+  }
+  @keyframes sidebar-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
+  /* Anchored on .shell, not .main — dashboard.css redeclares .main's padding
+     unconditionally, which would silently strip a padding-top set here. */
+  .shell {
+    padding-top: calc(60px + env(safe-area-inset-top));
+  }
+
+  /* Menu drops down from the topbar as a full-width panel instead of
+     sliding in from the edge — pairs naturally with a header-first mobile
+     layout, where there's no "side" for a drawer to belong to. Kept
+     mounted at all times and hidden via transform/opacity/visibility
+     (not conditionally rendered) so the slide-down animation has
+     something to animate from. */
   .sidebar {
     position: fixed;
-    top: 0;
+    top: calc(60px + env(safe-area-inset-top));
     left: 0;
-    height: 100vh;
-    width: 240px;
-    min-width: 240px;
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
+    right: 0;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    max-height: calc(100vh - 60px - env(safe-area-inset-top));
+    overflow-y: auto;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    transform: translateY(-16px);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease,
+      visibility 0s linear 0.22s;
+    pointer-events: none;
     z-index: 100;
+  }
+  /* Small grabber affordance at the top, like a bottom-sheet handle —
+     signals "this panel can be dismissed" without adding text. */
+  .sidebar::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.12);
+    margin: 10px auto 0;
   }
 
   .sidebar--mobile-open {
-    transform: translateX(0);
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease, visibility 0s;
   }
 
   .sidebar-toggle {
     display: none;
   }
 
-  .mobile-close-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: #888;
-    cursor: pointer;
+  /* The panel itself now scrolls (it's height:auto, capped by max-height),
+     so the nav list no longer needs its own independent scroll region —
+     that would risk a nested scrollbar inside the outer one. */
+  .nav {
+    flex: none;
+    overflow-y: visible;
+    padding: 8px 12px 16px;
   }
-  .mobile-close-btn:hover {
-    background: #f5f5f5;
-    color: #111;
+  .nav-item {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+  .nav-section {
+    padding: 14px 14px 6px;
   }
 
-  .main {
-    padding-top: 64px;
+  .sidebar-header {
+    padding: 6px 20px 18px;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .sidebar-footer {
+    padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
   }
 }

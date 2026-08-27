@@ -26,7 +26,7 @@ export default function Sidebar() {
     if (hydrated) localStorage.setItem(STORAGE_KEY, String(collapsed));
   }, [collapsed, hydrated]);
 
-  // Close the mobile drawer whenever the route changes (e.g. after tapping a nav link).
+  // Close the mobile menu whenever the route changes (e.g. after tapping a nav link).
   useEffect(() => {
     async function close() {
       setMobileOpen(false);
@@ -34,7 +34,7 @@ export default function Sidebar() {
     close();
   }, [pathname]);
 
-  // Lock page scroll behind the drawer while it's open on mobile.
+  // Lock page scroll behind the dropdown while it's open on mobile.
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => {
@@ -49,21 +49,30 @@ export default function Sidebar() {
   }
 
   const nameForDisplay = displayNameOrEmail(profile, user?.email);
-  // The mobile drawer always shows full labels, regardless of the desktop
+  // The mobile dropdown always shows full labels, regardless of the desktop
   // collapse preference — collapsing only makes sense for the persistent
   // side rail, not a temporary overlay.
   const showCollapsed = collapsed && !mobileOpen;
 
   return (
     <>
-      <button
-        type="button"
-        className="mobile-menu-btn"
-        onClick={() => setMobileOpen(true)}
-        aria-label="Open menu"
-      >
-        <Menu size={20} />
-      </button>
+      <div className="mobile-topbar">
+        <div className="mobile-topbar-text">
+          <span className="mobile-topbar-title">LOKE Coupons Manager</span>
+          <span className="mobile-topbar-welcome">Welcome {nameForDisplay.split(" ")[0]}</span>
+        </div>
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          onClick={() => setMobileOpen((open) => !open)}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
+        >
+          <span className={`menu-icon${mobileOpen ? " menu-icon--open" : ""}`}>
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </span>
+        </button>
+      </div>
       {mobileOpen && <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
       <aside
         className={`sidebar${showCollapsed ? " sidebar--collapsed" : ""}${mobileOpen ? " sidebar--mobile-open" : ""}`}
@@ -79,14 +88,6 @@ export default function Sidebar() {
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          </button>
-          <button
-            type="button"
-            className="mobile-close-btn"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close menu"
-          >
-            <X size={18} />
           </button>
         </div>
         {!showCollapsed && <p className="sidebar-subtitle">Jet&apos;s Pizza — US Operations</p>}
